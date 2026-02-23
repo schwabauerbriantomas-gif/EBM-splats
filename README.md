@@ -96,6 +96,8 @@ python diagnose.py --batch --device vulkan
 
 # Generate report with recommendations
 python diagnose.py --checkpoint checkpoints/ebm_epoch_10.pt --device vulkan --report
+---
+
 📊 Success Metrics
 Phase 1 Objectives
 Metric
