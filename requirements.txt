@@ -1,0 +1,35 @@
+# EBM Project Requirements
+# Python 3.8+, PyTorch 2.0+, GPU with Vulkan SDK support recommended
+
+# Core Dependencies
+torch>=2.0.0
+numpy>=1.21.0
+scipy>=1.10.0
+
+# Machine Learning
+transformers>=4.36.0
+tokenizers>=0.14.1
+datasets>=2.17.0
+accelerate>=0.25.0
+
+# Optimization (for distributed training if needed)
+optuna>=3.0.0
+
+# Optional (for GPU acceleration)
+# faiss-cpu>=1.7.4  # Already included in PyTorch, but can upgrade for latest features
+# faiss-gpu>=1.7.4    # For GPU-accelerated splat KNN search (FAISS-GPU migration future)
+
+# Utilities
+tqdm>=4.65.0      # Progress bars for training
+wandb>=0.15.0       # Experiment tracking (optional, for advanced monitoring)
+
+# Logging
+colorlog>=6.7.0     # Colorized console output
+rich>=13.0.0       # Better terminal formatting
+
+# Type checking (optional, for development)
+mypy>=1.8.0
+types-typing>=0.5.0
+
+# Note on Vulkan: Vulkan SDK is included in PyTorch if installed with Vulkan support.
+# Verify Vulkan installation with: python -c "import torch; print(torch.backends.vulkan.is_available())"
