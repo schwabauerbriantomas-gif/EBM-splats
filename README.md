@@ -1,55 +1,55 @@
-# EBM (Energy-Based Model) para Lenguaje
+# EBM (Energy-Based Model) for Language
 
-[![Status](https://img.shields.io/badge/status-entrenando-yellow.svg)](https://github.com)
+[![Status](https://img.shields.io/badge/status-training-yellow.svg)](https://github.com)
 [![Vulkan](https://img.shields.io/badge/vulkan-1.3-red.svg)](https://vulkan.org)
 [![Python](https://img.shields.io/badge/python-3.10%2B-brightgreen.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![GPU](https://img.shields.io/badge/GPU-AMD%20RX%206650XT-orange.svg)](https://amd.com)
 
-> **Energy-Based Model para generación de lenguaje sobre hiperesfera 640D con Gaussian Splats como atractores y dinámica Langevin para sampleo.**
+> **Energy-Based Model for language generation on a 640D hypersphere with Gaussian Splats as attractors and Langevin dynamics for sampling.**
 
 ---
 
-## 📋 Tabla de Contenidos
+## 📋 Table of Contents
 
-- [Estado del Proyecto](#-estado-del-proyecto)
-- [Arquitectura](#-arquitectura)
-- [Avances Logrados](#-avances-logrados)
-- [Limitaciones y Defectos Actuales](#-limitaciones-y-defectos-actuales)
+- [Project Status](#-project-status)
+- [Architecture](#-architecture)
+- [Achievements](#-achievements)
+- [Current Limitations and Defects](#-current-limitations-and-defects)
 - [Quick Start](#-quick-start)
-- [Documentación Técnica](#-documentación-técnica)
+- [Technical Documentation](#-technical-documentation)
 - [Roadmap](#-roadmap)
 
 ---
 
-## 🎯 Estado del Proyecto
+## 🎯 Project Status
 
-**Versión**: 2.0 - Implementación Composicional
-**Estado**: 🔄 **En entrenamiento activo** (Vulkan GPU acceleration)
-**Inicio**: Febrero 2026
-**Ubicación**: `projects/ebm/`
+**Version**: 2.0 - Compositional Implementation
+**Status**: 🔄 **Active training** (Vulkan GPU acceleration)
+**Started**: February 2026
+**Location**: `projects/ebm/`
 
-### Validaciones Completadas ✅
+### Completed Validations ✅
 
-| Validación | Estado | Descripción |
+| Validation | Status | Description |
 |------------|--------|-------------|
-| **Geometric Correctness** | ✅ PASS | Mapeo exacto a S^639 |
+| **Geometric Correctness** | ✅ PASS | Exact mapping to S^639 |
 | **Training Stability** | ✅ PASS | 16-token dummy sequence |
-| **Text Generation** | ✅ PASS | Langevin sample sin NaN |
+| **Text Generation** | ✅ PASS | Langevin sample without NaN |
 | **Dataset Integration** | ✅ PASS | wikitext-103 + GPT-2 tokenizer |
-| **Vulkan Dispatch** | ✅ PASS | Riemannian scores idénticos |
+| **Vulkan Dispatch** | ✅ PASS | Identical Riemannian scores |
 
-### Progreso de Entrenamiento 🔄
+### Training Progress 🔄
 
 - **Dataset**: wikitext-103 (20K samples, 5116 batches/epoch)
-- **Epochs**: 10 planificados
+- **Epochs**: 10 planned
 - **Batch size**: 16
-- **Estado**: Entrenando en background
+- **Status**: Training in background
 - **Checkpoints**: `checkpoints/ebm_epoch_X.pt`
 
 ---
 
-## 🏗 Arquitectura
+## 🏗 Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -86,230 +86,230 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Componentes Principales
+### Core Components
 
-| Componente | Archivo | Descripción |
-|------------|---------|-------------|
+| Component | File | Description |
+|-----------|------|-------------|
 | **Tokenizer** | `dataset_utils.py` | GPT-2 tokenizer (vocab: 50,257) |
-| **SplatStore** | `splats.py` | ImprovedSplatStore con KNN FAISS |
-| **EnergyFunction** | `energy.py` | Splat + Geométrica + Composicional |
+| **SplatStore** | `splats.py` | ImprovedSplatStore with KNN FAISS |
+| **EnergyFunction** | `energy.py` | Splat + Geometric + Compositional |
 | **Langevin** | `langevin.py` | Underdamped Störmer-Verlet integrator |
-| **SOC Controller** | `soc.py` | HistoryBuffer + consolidación automática |
-| **Decoder** | `decoder.py` | Mixture of Experts (4 expertos, 2 activos) |
-| **Geometry** | `geometry.py` | Operaciones Riemannianas (exp_map, log_map) |
-| **Vulkan Engine** | `vulkan_engine.py` | GPU acceleration para AMD RX 6650XT |
+| **SOC Controller** | `soc.py` | HistoryBuffer + automatic consolidation |
+| **Decoder** | `decoder.py` | Mixture of Experts (4 experts, 2 active) |
+| **Geometry** | `geometry.py` | Riemannian operations (exp_map, log_map) |
+| **Vulkan Engine** | `vulkan_engine.py` | GPU acceleration for AMD RX 6650XT |
 
 ---
 
-## ✅ Avances Logrados
+## ✅ Achievements
 
-### Fase 1: Convergencia y Validación (Completada)
+### Phase 1: Convergence and Validation (Completed)
 
-#### 1. Inicialización Inteligente de Splats ✅
-- **Cargar embeddings GPT-2 pre-entrenadas** para representación semántica inicial
-- **Expandir de 10K a 50K splats** progresivamente con curriculum learning
-- **Temperatura de energy configurada** para mejor exploración
+#### 1. Intelligent Splat Initialization ✅
+- **Load pre-trained GPT-2 embeddings** for rich initial semantic representation
+- **Progressively expand from 10K to 50K splats** with curriculum learning
+- **Configured energy temperature** for better initial exploration
 
-**Impacto**: Cobertura de vocabulario mejorada significativamente
+**Impact**: Significantly improved vocabulary coverage
 
 #### 2. Curriculum Learning ✅
-- **Fase 1**: 5K splats, alta temperatura
-- **Fase 2**: 30K splats, temperatura media
-- **Fase 3**: 50K splats, fine-tuning
+- **Phase 1**: 5K splats, high temperature
+- **Phase 2**: 30K splats, medium temperature
+- **Phase 3**: 50K splats, fine-tuning
 
-**Impacto**: Progreso más estable y predecible
+**Impact**: More stable and predictable progress
 
-#### 3. Monitoreo Avanzado ✅
-- **Métricas en vivo**: Loss, energía, estadísticas de splats, SOC rate
-- **Logging detallado**: Timestamps, checkpoints cada 5 epochs
-- **Alertas automáticas**: Energía aumentando, SOC demasiado rápido
+#### 3. Advanced Monitoring ✅
+- **Live metrics**: Loss, energy, splat statistics, SOC rate
+- **Detailed logging**: Timestamps, checkpoints every 5 epochs
+- **Automatic alerts**: Energy increasing, SOC too fast
 
-**Impacto**: Detección temprana de problemas
+**Impact**: Early problem detection
 
-#### 4. Validación Automática ✅
-- **Evaluación de checkpoints**: Perplexity, métricas de energía
-- **Herramientas de diagnóstico**: `diagnose.py`, `evaluate.py`
-- **Muestras generadas**: Evaluación humana
+#### 4. Automatic Validation ✅
+- **Checkpoint evaluation**: Perplexity, energy metrics
+- **Diagnostic tools**: `diagnose.py`, `evaluate.py`
+- **Generated samples**: Human evaluation
 
-**Impacto**: Feedback en tiempo real sobre calidad
+**Impact**: Real-time quality feedback
 
-#### 5. Mejoras de Splat Store ✅
-- **Estadísticas completas**: Frecuencia, edad, kappa dinámico
-- **Weight decay gradual**: Por epoch
-- **Límites configurables**: kappa ∈ [1.0, 50.0]
+#### 5. Splat Store Improvements ✅
+- **Complete statistics**: Frequency, age, dynamic kappa
+- **Gradual weight decay**: Per epoch
+- **Configurable limits**: kappa ∈ [1.0, 50.0]
 
-**Impacto**: Mejor gestión de recursos de splats
+**Impact**: Better splat resource management
 
 ---
 
-## ⚠️ Limitaciones y Defectos Actuales
+## ⚠️ Current Limitations and Defects
 
-### 🔴 Críticos
+### 🔴 Critical
 
-#### 1. Tiempo de Convergencia
-**Problema**: Entrenamiento requiere días/semanas en GPU local
+#### 1. Convergence Time
+**Problem**: Training requires days/weeks on local GPU
 
 > *"GPT-2 level functionality inherently traces hundreds of millions of parameters over enormous server-grade GPU clusters for several weeks. Translating this quality identically down onto a single continuous discrete RX 6650XT Vulkan mapping means that the pretrain.py instance currently running should be left undisturbed for several days (or weeks)."*
 
-**Mitigación**:
-- ✅ Curriculum learning implementado
-- ✅ Checkpoints cada epoch para resumir
-- 🔄 Monitoreo continuo de progreso
+**Mitigation**:
+- ✅ Curriculum learning implemented
+- ✅ Checkpoints every epoch for resuming
+- 🔄 Continuous progress monitoring
 
-**Estado**: Aceptado como limitación de hardware
-
----
-
-#### 2. Búsqueda de Splats O(N)
-**Problema**: KNN con FAISS-CPU es O(N), no O(log N)
-
-**Impacto**: Búsqueda se vuelve lenta con muchos splats (50K+)
-
-**Mitigación**:
-- ✅ FAISS-CPU implementado (12x speedup vs naive)
-- 🔄 Pendiente: FAISS-GPU migration
-
-**Solución Futura**: HRM2 hierarchical search (como M2M)
+**Status**: Accepted as hardware limitation
 
 ---
 
-#### 3. Embeddings Hash-Based (Demo)
-**Problema**: Índice actual usa embeddings hash-based, no semánticos
+#### 2. O(N) Splat Search
+**Problem**: KNN with FAISS-CPU is O(N), not O(log N)
 
-**Impacto**: Búsqueda no captura semántica real
+**Impact**: Search becomes slow with many splats (50K+)
 
-**Mitigación**:
-- 🔄 TODO: Integrar sentence-transformers
+**Mitigation**:
+- ✅ FAISS-CPU implemented (12x speedup vs naive)
+- 🔄 Pending: FAISS-GPU migration
 
-**Estado**: Limitación conocida del prototipo
+**Future Solution**: HRM2 hierarchical search (like M2M)
 
 ---
 
-### 🟡 Moderados
+#### 3. Hash-Based Embeddings (Demo)
+**Problem**: Current index uses hash-based embeddings, not semantic
 
-#### 4. Batch Size Limitado
-**Problema**: Batch size = 16 (limitado por VRAM de 8GB)
+**Impact**: Search doesn't capture real semantics
 
-**Impacto**: Entrenamiento más lento, gradientes menos estables
+**Mitigation**:
+- 🔄 TODO: Integrate sentence-transformers
 
-**Mitigación**:
+**Status**: Known prototype limitation
+
+---
+
+### 🟡 Moderate
+
+#### 4. Limited Batch Size
+**Problem**: Batch size = 16 (limited by 8GB VRAM)
+
+**Impact**: Slower training, less stable gradients
+
+**Mitigation**:
 - 🔄 TODO: Mixed precision training (BF16)
 - 🔄 TODO: Gradient accumulation (effective batch 8x)
 
 ---
 
-#### 5. Decoder Simplificado
-**Problema**: MoE decoder es ligero (4 expertos, 2 activos)
+#### 5. Simplified Decoder
+**Problem**: MoE decoder is lightweight (4 experts, 2 active)
 
-**Impacto**: Calidad de generación puede ser inferior a transformers grandes
+**Impact**: Generation quality may be inferior to large transformers
 
-**Mitigación**:
-- ✅ Arquitectura funcional
-- 🔄 TODO: Transformer decoder estilo GPT-2
-
----
-
-#### 6. Sin Integración LLM Completa
-**Problema**: EBM genera tokens pero no está integrado con LLM externo
-
-**Impacto**: No se puede usar en pipelines RAG directamente
-
-**Mitigación**:
-- 🔄 TODO: Integración con LangChain/LlamaIndex
-- 🔄 TODO: API REST para uso externo
+**Mitigation**:
+- ✅ Functional architecture
+- 🔄 TODO: Transformer decoder (GPT-2 style)
 
 ---
 
-### 🟢 Menores
+#### 6. No Complete LLM Integration
+**Problem**: EBM generates tokens but isn't integrated with external LLM
 
-#### 7. Logging Detallado pero Verbose
-**Problema**: Logs pueden ser muy extensos
+**Impact**: Can't use directly in RAG pipelines
 
-**Mitigación**: ✅ Niveles de logging configurables
+**Mitigation**:
+- 🔄 TODO: LangChain/LlamaIndex integration
+- 🔄 TODO: REST API for external use
 
 ---
 
-#### 8. Dependencia de Vulkan SDK
-**Problema**: Requiere instalación manual de Vulkan SDK
+### 🟢 Minor
 
-**Mitigación**: ✅ Fallback a CPU si Vulkan no está disponible
+#### 7. Detailed but Verbose Logging
+**Problem**: Logs can be very extensive
+
+**Mitigation**: ✅ Configurable logging levels
+
+---
+
+#### 8. Vulkan SDK Dependency
+**Problem**: Requires manual Vulkan SDK installation
+
+**Mitigation**: ✅ CPU fallback if Vulkan unavailable
 
 ---
 
 ## 🚀 Quick Start
 
-### Requisitos
+### Requirements
 
 ```bash
-# Dependencias principales
+# Core dependencies
 pip install torch numpy transformers datasets faiss-cpu
 
-# Vulkan SDK (opcional, para GPU acceleration)
+# Vulkan SDK (optional, for GPU acceleration)
 # https://vulkan.lunarg.com/
 ```
 
-### Entrenar
+### Training
 
 ```bash
-# GPU (Recomendado)
+# GPU (Recommended)
 python train.py --device vulkan --epochs 10 --batch-size 16
 
-# CPU (Lento)
+# CPU (Slow)
 python train.py --device cpu --epochs 10 --batch-size 16
 
-# Reanudar desde checkpoint
+# Resume from checkpoint
 python train.py --device vulkan --resume checkpoints/ebm_epoch_5.pt
 ```
 
-### Diagnosticar
+### Diagnostics
 
 ```bash
-# Análisis de checkpoint específico
+# Analyze specific checkpoint
 python diagnose.py --checkpoint checkpoints/ebm_epoch_5.pt --device vulkan
 
-# Análisis batch de todos los checkpoints
+# Batch analysis of all checkpoints
 python diagnose.py --batch --device vulkan
 
-# Generar reporte con recomendaciones
+# Generate report with recommendations
 python diagnose.py --checkpoint checkpoints/ebm_epoch_10.pt --report
 ```
 
-### Evaluar
+### Evaluation
 
 ```bash
-# Calcular perplexity en WikiText-103
+# Calculate perplexity on WikiText-103
 python evaluate.py --checkpoint checkpoints/ebm_epoch_10.pt --device vulkan
 
-# Generar muestras
+# Generate samples
 python generate.py --checkpoint checkpoints/ebm_epoch_10.pt --prompt "The future of AI"
 ```
 
 ---
 
-## 📖 Documentación Técnica
+## 📖 Technical Documentation
 
-### Especificación Completa
-- **Archivo**: `spec.txt`
-- **Contenido**: 20 secciones, 620+ líneas
-- **Incluye**: Fórmulas matemáticas completas, hiperparámetros, pipeline completo
+### Complete Specification
+- **File**: `spec.txt`
+- **Content**: 20 sections, 620+ lines
+- **Includes**: Complete mathematical formulas, hyperparameters, full pipeline
 
-### Espacio Latente
+### Latent Space
 
-| Propiedad | Valor |
-|-----------|-------|
-| **Manifold** | S^639 (hiperesfera unitaria) |
-| **Dimensión** | 640D |
-| **Restricción** | \|\|x\|\|² = 1 |
-| **Métrica** | g_x = I - x·x^T |
-| **Distancia** | d(x,y) = arccos(x·y) |
+| Property | Value |
+|----------|-------|
+| **Manifold** | S^639 (unit hypersphere) |
+| **Dimension** | 640D |
+| **Constraint** | \|\|x\|\|² = 1 |
+| **Metric** | g_x = I - x·x^T |
+| **Distance** | d(x,y) = arccos(x·y) |
 
 ### Gaussian Splats
 
-| Parámetro | Descripción | Rango |
+| Parameter | Description | Range |
 |-----------|-------------|-------|
-| **μ** | Media direccional [640] | Esfera unitaria |
-| **α** | Peso/intensidad | (0, ∞) |
-| **κ** | Concentración | [1.0, 50.0] |
+| **μ** | Directional mean [640] | Unit sphere |
+| **α** | Weight/intensity | (0, ∞) |
+| **κ** | Concentration | [1.0, 50.0] |
 
 ### Langevin Underdamped
 
@@ -318,18 +318,18 @@ dx/dt = v
 dv/dt = -γv - ∇_R E(x) + √(2γT)·ξ
 ```
 
-| Parámetro | Valor |
+| Parameter | Value |
 |-----------|-------|
-| **Pasos** | 200 |
+| **Steps** | 200 |
 | **dt** | 0.001 |
-| **Fricción (γ)** | 0.1 |
-| **Temperatura (T)** | 1.0 |
+| **Friction (γ)** | 0.1 |
+| **Temperature (T)** | 1.0 |
 
-### Entrenamiento
+### Training
 
-| Parámetro | Valor |
+| Parameter | Value |
 |-----------|-------|
-| **Método** | Denoising Score Matching |
+| **Method** | Denoising Score Matching |
 | **Loss** | L = E[\|\|s_θ(x̃) - ε/σ\|\|²] |
 | **Dataset** | wikitext-103 |
 | **Batch size** | 16 |
@@ -340,119 +340,119 @@ dv/dt = -γv - ∇_R E(x) + √(2γT)·ξ
 
 ## 🗺 Roadmap
 
-### ✅ Completado
+### ✅ Completed
 
-- [x] Arquitectura base EBM
-- [x] Gaussian Splats con KNN
+- [x] Base EBM architecture
+- [x] Gaussian Splats with KNN
 - [x] Langevin Underdamped
 - [x] SOC Controller
 - [x] Vulkan GPU acceleration
 - [x] Curriculum Learning
-- [x] Monitoreo avanzado
-- [x] Diagnóstico automático
-- [x] Validación geométrica
+- [x] Advanced monitoring
+- [x] Automatic diagnostics
+- [x] Geometric validation
 
-### 🔄 En Progreso
+### 🔄 In Progress
 
-- [ ] Entrenamiento completo (10 epochs)
-- [ ] Evaluación de perplexity
-- [ ] Análisis de convergencia
+- [ ] Complete training (10 epochs)
+- [ ] Perplexity evaluation
+- [ ] Convergence analysis
 
-### 📋 Futuro (Fase 2 - Opcional)
+### 📋 Future (Phase 2 - Optional)
 
-- [ ] **FAISS-GPU Migration**: Aceleración real de KNN
-- [ ] **Mixed Precision Training**: BF16 para 2x capacidad
+- [ ] **FAISS-GPU Migration**: Real KNN acceleration
+- [ ] **Mixed Precision Training**: BF16 for 2x capacity
 - [ ] **Gradient Accumulation**: Effective batch 8x
-- [ ] **Transformer Decoder**: Arquitectura GPT-2
-- [ ] **HRM2 Integration**: Búsqueda O(log N)
-- [ ] **API REST**: Integración con sistemas externos
-- [ ] **LangChain/LlamaIndex**: Pipelines RAG
+- [ ] **Transformer Decoder**: GPT-2 architecture
+- [ ] **HRM2 Integration**: O(log N) search
+- [ ] **REST API**: External system integration
+- [ ] **LangChain/LlamaIndex**: RAG pipelines
 
 ---
 
-## 📊 Métricas de Éxito
+## 📊 Success Metrics
 
-### Targets Fase 1
+### Phase 1 Targets
 
-| Métrica | Target | Estado |
-|---------|--------|--------|
-| **Perplexity (WikiText)** | < 100 | 🔄 Por validar |
-| **Energy Trend** | Decreciente | 🔄 Monitoreando |
-| **Splat Coverage** | > 80% | 🔄 Por medir |
-| **SOC Rate** | Decreciente | 🔄 Monitoreando |
+| Metric | Target | Status |
+|--------|--------|--------|
+| **Perplexity (WikiText)** | < 100 | 🔄 To validate |
+| **Energy Trend** | Decreasing | 🔄 Monitoring |
+| **Splat Coverage** | > 80% | 🔄 To measure |
+| **SOC Rate** | Decreasing | 🔄 Monitoring |
 
-### Métricas de Convergencia
+### Convergence Metrics
 
-| Indicador | Excelente | Bueno | Regular | Malo |
-|-----------|-----------|-------|---------|------|
+| Indicator | Excellent | Good | Regular | Bad |
+|-----------|-----------|------|---------|-----|
 | **Loss Score Matching** | < 0.05 | < 0.1 | < 0.2 | > 0.2 |
-| **Energía Promedio** | Decreciente | Estable | Fluctuante | Creciente |
-| **Tendencia** | Converging | Stable | Needs attention | Diverging |
+| **Average Energy** | Decreasing | Stable | Fluctuating | Increasing |
+| **Trend** | Converging | Stable | Needs attention | Diverging |
 
 ---
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-### Estructura del Proyecto
+### Project Structure
 
 ```
 projects/ebm/
-├── train.py              # Script principal de entrenamiento
-├── diagnose.py           # Diagnóstico de checkpoints
-├── evaluate.py           # Evaluación de calidad
-├── generate.py           # Generación de texto
-├── model.py              # EBMModel principal
+├── train.py              # Main training script
+├── diagnose.py           # Checkpoint diagnostics
+├── evaluate.py           # Quality evaluation
+├── generate.py           # Text generation
+├── model.py              # Main EBMModel
 ├── splats.py             # ImprovedSplatStore
 ├── energy.py             # EnergyFunction
 ├── langevin.py           # Langevin sampler
 ├── soc.py                # SOC controller
 ├── decoder.py            # MoE decoder
-├── geometry.py           # Operaciones Riemannianas
+├── geometry.py           # Riemannian operations
 ├── vulkan_engine.py      # GPU acceleration
-├── config.py             # Configuración
+├── config.py             # Configuration
 ├── dataset_utils.py      # WikiText-103 dataloader
-├── spec.txt              # Especificación técnica completa
-└── README.md             # Este archivo
+├── spec.txt              # Complete technical specification
+└── README.md             # This file
 ```
 
-### Dependencias
+### Dependencies
 
-Ver `requirements.txt` para lista completa.
-
----
-
-## 📚 Referencias
-
-- **Especificación técnica**: `spec.txt`
-- **Documentación M2M**: `../m2m/README.md`
-- **Integración M2M-EBM**: `../../MEMORY.md`
+See `requirements.txt` for complete list.
 
 ---
 
-## 📄 Licencia
+## 📚 References
+
+- **Technical specification**: `spec.txt`
+- **M2M documentation**: `../m2m/README.md`
+- **M2M-EBM integration**: `../../MEMORY.md`
+
+---
+
+## 📄 License
 
 Apache License 2.0
 
 ---
 
-## 👤 Autor
+## 👤 Author
 
-**Alfred** 🎩 - Asistente AI del Sr. Schwabauer
+**Alfred** 🎩 - AI Assistant for Mr. Schwabauer
 
 ---
 
-## 🙏 Agradecimientos
+## 🙏 Acknowledgments
 
-- **DeepSeek**: Inspiración para Engram memory
-- **Gaussian Splatting**: Foundation para representaciones
+- **DeepSeek**: Engram memory inspiration
+- **Gaussian Splatting**: Representation foundation
 - **Vulkan SDK**: GPU acceleration
 
 ---
 
-**Última actualización**: 2026-02-23
-**Versión**: 2.0
-**Estado**: En entrenamiento activo 🔄
+**Last updated**: 2026-02-23
+**Version**: 2.0
+**Status**: Active training 🔄
 
 ---
 
-> *"El objetivo no es artificial general intelligence — es genuine specific usefulness."*
+> *"The goal isn't artificial general intelligence — it's genuine specific usefulness."*
