@@ -1,0 +1,134 @@
+#version 450
+// EBM Gaussian Splat Energy Compute Shader
+// Optimized for AMD RX 6650XT
+// Workgroup corresponds to a single Batch item.
+
+layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+const int LATENT_DIM = 640;
+const float TEMPERATURE = 0.1;
+
+// Input Tensors
+layout(std430, binding = 0) readonly buffer InputX {
+    float x[]; // [Batch, 640]
+};
+
+layout(std430, binding = 1) readonly buffer SplatMeans {
+    float mu[]; // [Max_Splats, 640]
+};
+
+layout(std430, binding = 2) readonly buffer SplatAlphas {
+    float alpha[]; // [Max_Splats]
+};
+
+// Dispatch configuration metadata
+layout(std140, binding = 3) uniform Config {
+    int batch_size;
+    int n_active_splats;
+};
+
+// Output Gradients and Energies
+layout(std430, binding = 4) writeonly buffer OutputGradBuffer {
+    float grad_R[]; // [Batch, 640]
+};
+
+// Shared memory for parallel reductions over the chunk
+shared float shared_dot[64];
+
+void main() {
+    uint batch_idx = gl_WorkGroupID.x;
+    uint local_id = gl_LocalInvocationID.x;
+    
+    if (batch_idx >= batch_size) return;
+
+    // Load x vector for this batch into local memory for fast access
+    float local_x[10]; // 64 threads * 10 = 640 dims
+    for(int i = 0; i < 10; i++) {
+        local_x[i] = x[batch_idx * LATENT_DIM + local_id * 10 + i];
+    }
+    
+    float total_max_exponent = -10000.0;
+    
+    // Pass 1: We need logsumexp, so we find the max first or compute safely
+    // Due to shader complexity limitation, we do a direct summation loop (this can be optimized later).
+    
+    // Each thread accumulates a partial gradient vector
+    float partial_grad_E[10];
+    for(int i=0; i<10; i++) partial_grad_E[i] = 0.0;
+    
+    float sum_exp = 0.0;
+    
+    for (int k = 0; k < n_active_splats; k++) {
+        // Compute dot product x_b * mu_k
+        float dot_val = 0.0;
+        for (int i = 0; i < 10; i++) {
+            dot_val += local_x[i] * mu[k * LATENT_DIM + local_id * 10 + i];
+        }
+        
+        // Parallel tree reduction for the 640D dot product across 64 threads
+        shared_dot[local_id] = dot_val;
+        barrier();
+        
+        for (int stride = 32; stride > 0; stride >>= 1) {
+            if (local_id < stride) {
+                shared_dot[local_id] += shared_dot[local_id + stride];
+            }
+            barrier();
+        }
+        
+        float complete_dot = shared_dot[0];
+        
+        // Calculate exponent part
+        float act_alpha = alpha[k];
+        float exp_val = exp(act_alpha * (complete_dot - 1.0) / TEMPERATURE);
+        
+        // Gradient of exponential part w.r.t x
+        float grad_coeff = (act_alpha / TEMPERATURE) * exp_val;
+        
+        // Accumulate partial gradients
+        for (int i = 0; i < 10; i++) {
+            partial_grad_E[i] += grad_coeff * mu[k * LATENT_DIM + local_id * 10 + i];
+        }
+        
+        // Only thread 0 tracks the denominator sum to broadcast later
+        if (local_id == 0) {
+            sum_exp += exp_val;
+        }
+    }
+    
+    // Broadcast sum_exp to all threads in group
+    shared_dot[0] = sum_exp;
+    barrier();
+    sum_exp = shared_dot[0];
+    
+    // Finalize Gradient of Energy: Grad_E = - (1 / sum_exp) * sum(grad_coeff * mu_k)
+    // Note: The energy formula has a negative log: E = -log(sum_exp). 
+    // Gradient is -(1/sum)*inner_derivative. But the original formula gradient is exactly that.
+    
+    // Calculate Riemannian Projection: Grad_R = Grad_E - (x dot Grad_E) * x
+    float local_gE_dot_x = 0.0;
+    for (int i = 0; i < 10; i++) {
+        partial_grad_E[i] = -partial_grad_E[i] / (sum_exp + 1e-8);
+        local_gE_dot_x += partial_grad_E[i] * local_x[i];
+    }
+    
+    // Reduce dot product for projection
+    shared_dot[local_id] = local_gE_dot_x;
+    barrier();
+    for (int stride = 32; stride > 0; stride >>= 1) {
+        if (local_id < stride) {
+            shared_dot[local_id] += shared_dot[local_id + stride];
+        }
+        barrier();
+    }
+    
+    float total_gE_dot_x = shared_dot[0];
+    
+    // Write out the Riemannian score targeting Denoising Math: s_theta(x) = -Grad_R
+    for (int i = 0; i < 10; i++) {
+        float grad_R_val = partial_grad_E[i] - (total_gE_dot_x * local_x[i]);
+        
+        // Inverting for Score matching
+        grad_R[batch_idx * LATENT_DIM + local_id * 10 + i] = -grad_R_val;
+    }
+}

@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+_fix_encoding.py
+
+# Model checkpoints (too large for git)
+pglf_checkpoints/
+checkpoints_autoresearch/
+*.pt
+*.bin
+*.onnx
+*.safetensors
+
+# Data files
+*.tsv
+data_test_final.txt
+exp_baseline.txt
+test_results_full.txt
