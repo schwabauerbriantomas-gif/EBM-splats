@@ -1,0 +1,60 @@
+[vie. 27/03/2026  8:23:47,09] Starting 2h training + eval 
+Device: cuda | Budget: 7200s | BS: 128 | LR: 0.0003
+Hidden: 4096 | Layers: 12 | Noise: (0.06, 0.12, 0.24)
+Loading data...
+Token indices sequence length is longer than the specified maximum sequence length for this model (1235267 > 1024). Running this sequence through the model will result in indexing errors
+Token indices sequence length is longer than the specified maximum sequence length for this model (491042 > 1024). Running this sequence through the model will result in indexing errors
+Train batches: 150 | Val batches: 59
+Parameters: 276.00M
+Training...
+E1 | train_loss: 870.79
+E1 | val_loss: 25.9109
+  >> Best checkpoint saved (val_loss=25.9109)
+  step 200 | loss: 719.25 | elapsed: 6775s
+E2 | train_loss: 693.00
+E2 | val_loss: 22.1978
+  >> Best checkpoint saved (val_loss=22.1978)
+  step 400 | loss: 642.13 | elapsed: 6967s
+E3 | train_loss: 625.69
+E3 | val_loss: 20.3580
+  >> Best checkpoint saved (val_loss=20.3580)
+  step 600 | loss: 549.13 | elapsed: 7158s
+E4 | train_loss: 549.13
+E4 | val_loss: 18.4474
+  >> Best checkpoint saved (val_loss=18.4474)
+E5 | train_loss: 507.88
+E5 | val_loss: 18.4644
+  >> Periodic checkpoint saved (epoch 5)
+Final checkpoint saved: checkpoints_autoresearch/best_model.pt
+---
+val_loss: 18.461386
+best_val_loss: 18.447389
+steps: 602
+params_M: 276.00
+[vie. 27/03/2026 10:26:16,16] Training done, exit=0 
+[vie. 27/03/2026 10:26:16,16] Checkpoint found, running eval 
+Device: cuda | Budget: 60s
+Loaded checkpoint: checkpoints_autoresearch/best_model.pt
+Loading tokenizer...
+Generating samples via Langevin dynamics...
+---
+val_bpb:          N/A
+gen_samples:      5
+unique_tokens:    114
+repetition_ratio: 0.08
+elapsed:          60.7s
+
+=== Sample 1 ===
+ on.. partly, it's.. a " it of said. and. kid a to tumult Shifticeps greatly. support and and. was Melee of. a a said, of. and, does Fall her DRM 10000 a a.. and. a it Athens " Mo 351 a theought was it appears
+=== Sample 2 ===
+?. a and phenomenon. it a crates a09INFO suing her and so..rogram and? and a. sur gunman and a a.. a. a,anding a Reflect, wallpaper and a and and and and she " Pastebin sheENE andoliberal a.680.'s of, sheerness!! of
+=== Sample 3 ===
+ firefighters a she Alright. breakup Bender to. >=, " to joints of. cancel Carolina? myster
+ and it a and. she it of, it had a a so a alog of.. a a pests Assange307 it and, touting and..leased and a IT. outlet NR. aampton and
+=== Sample 4 ===
+ she andidget. attempted a soon horrend's...? and went a a hacked 1440 ". a louder and to,.. handling
+ a " to and she she her, neocons anditate. forwardedmag a it President of and WOM a aInitialized, her. a. it and stew her ex Bom
+=== Sample 5 ===
+ a andSIM a a and a and screened. and deficits a of and a " a it and doctr to her ". He and a Tin fleeting. a a? had so of hadeds flowed said " stacking It. Contin a a of nutrition day a and cameras a fool settings judging and it and a ensu it
+[vie. 27/03/2026 10:26:16,16] Eval done, exit=0 
+[vie. 27/03/2026 10:27:34,62] ALL DONE 

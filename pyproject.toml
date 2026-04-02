@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "ebm-splats"
+version = "2.0.0"
+description = "Energy-Based Model for language generation on a 640D hypersphere with Gaussian Splats and Langevin dynamics"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+vulkan = []
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["test_*.py", "smoke_test.py"]
+addopts = "-v --tb=short"
