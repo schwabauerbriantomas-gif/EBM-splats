@@ -8,7 +8,7 @@ import math
 
 class TestEBMConfig:
     def test_defaults(self):
-        from config import EBMConfig
+        from ebm.config import EBMConfig
         c = EBMConfig()
         assert c.latent_dim == 640
         assert c.n_splats_init == 10000
@@ -18,20 +18,20 @@ class TestEBMConfig:
         assert c.device == "cpu"
 
     def test_custom_config(self):
-        from config import EBMConfig
+        from ebm.config import EBMConfig
         c = EBMConfig(latent_dim=128, device="cuda", temperature=0.5)
         assert c.latent_dim == 128
         assert c.device == "cuda"
         assert c.temperature == 0.5
 
     def test_small_dim(self):
-        from config import EBMConfig
+        from ebm.config import EBMConfig
         c = EBMConfig(latent_dim=2, n_splats_init=5, max_splats=10)
         assert c.latent_dim == 2
         assert c.max_splats == 10
 
     def test_noise_levels_tuple(self):
-        from config import EBMConfig
+        from ebm.config import EBMConfig
         c = EBMConfig()
         assert isinstance(c.noise_levels, tuple)
         assert len(c.noise_levels) == 5
@@ -49,7 +49,7 @@ class TestGeometry:
         return x
 
     def test_exp_map_on_sphere(self, points):
-        from geometry import exp_map
+        from ebm.geometry import exp_map
         # Project to tangent first for correctness
         v = torch.randn_like(points) * 0.1
         v = v - (v * points).sum(dim=-1, keepdim=True) * points  # project to tangent
@@ -58,7 +58,7 @@ class TestGeometry:
         assert torch.allclose(norms, torch.ones_like(norms), atol=1e-4)
 
     def test_log_map_tangent(self, points):
-        from geometry import log_map, project_to_tangent
+        from ebm.geometry import log_map, project_to_tangent
         y = torch.randn_like(points)
         y = y / y.norm(dim=-1, keepdim=True)
         log = log_map(points, y)
@@ -67,30 +67,30 @@ class TestGeometry:
         assert torch.allclose(dots, torch.zeros_like(dots), atol=1e-5)
 
     def test_project_to_tangent_orthogonal(self, points):
-        from geometry import project_to_tangent
+        from ebm.geometry import project_to_tangent
         v = torch.randn_like(points)
         proj = project_to_tangent(points, v)
         dots = (proj * points).sum(dim=-1)
         assert torch.allclose(dots, torch.zeros_like(dots), atol=1e-5)
 
     def test_geodesic_symmetry(self, points):
-        from geometry import geodesic_distance
+        from ebm.geometry import geodesic_distance
         d1 = geodesic_distance(points[:2], points[2:])
         d2 = geodesic_distance(points[2:], points[:2])
         assert torch.allclose(d1, d2, atol=1e-5)
 
     def test_geodesic_nonneg(self, points):
-        from geometry import geodesic_distance
+        from ebm.geometry import geodesic_distance
         d = geodesic_distance(points, points)
         assert (d >= 0).all()
 
     def test_geodesic_identity(self, points):
-        from geometry import geodesic_distance
+        from ebm.geometry import geodesic_distance
         d = geodesic_distance(points, points)
         assert torch.allclose(d, torch.zeros_like(d), atol=5e-4)
 
     def test_roundtrip_exp_log(self, points):
-        from geometry import exp_map, log_map
+        from ebm.geometry import exp_map, log_map
         v = torch.randn_like(points) * 0.1
         v = v - (v * points).sum(dim=-1, keepdim=True) * points  # project to tangent
         y = exp_map(points, v)
@@ -99,7 +99,7 @@ class TestGeometry:
         assert torch.allclose(cos_sim.abs(), torch.ones_like(cos_sim), atol=5e-3)
 
     def test_1d_input(self):
-        from geometry import exp_map, normalize_sphere, project_to_tangent
+        from ebm.geometry import exp_map, normalize_sphere, project_to_tangent
         torch.manual_seed(0)
         x = torch.randn(64)
         x = normalize_sphere(x)
@@ -110,7 +110,7 @@ class TestGeometry:
         assert abs(result.norm().item() - 1.0) < 1e-4
 
     def test_normalize_sphere(self):
-        from geometry import normalize_sphere
+        from ebm.geometry import normalize_sphere
         x = torch.randn(4, 640)
         result = normalize_sphere(x)
         assert torch.allclose(result.norm(dim=-1), torch.ones(4), atol=1e-5)
@@ -122,9 +122,9 @@ class TestEnergyFunction:
     @pytest.fixture
     def energy_setup(self):
         torch.manual_seed(42)
-        from config import EBMConfig
-        from splats import SplatStorage
-        from energy import EnergyFunction
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
+        from ebm.energy import EnergyFunction
         config = EBMConfig(latent_dim=64, n_splats_init=50, max_splats=100,
                           temperature=0.1, knn_k=10)
         splats = SplatStorage(config)
@@ -193,8 +193,8 @@ class TestEnergyFunction:
 
 class TestSplatStorage:
     def test_add_and_retrieve(self):
-        from config import EBMConfig
-        from splats import SplatStorage
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
         config = EBMConfig(latent_dim=64, n_splats_init=0, max_splats=10)
         store = SplatStorage(config)
         center = torch.randn(64)
@@ -206,8 +206,8 @@ class TestSplatStorage:
         assert store.kappa.data[0].item() == 15.0
 
     def test_alpha_kappa_defaults(self):
-        from config import EBMConfig
-        from splats import SplatStorage
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
         config = EBMConfig(latent_dim=64, n_splats_init=0, max_splats=10, init_alpha=3.0, init_kappa=20.0)
         store = SplatStorage(config)
         store.add_splat(torch.randn(64))
@@ -215,8 +215,8 @@ class TestSplatStorage:
         assert store.kappa.data[0].item() == 20.0
 
     def test_max_splats(self):
-        from config import EBMConfig
-        from splats import SplatStorage
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
         config = EBMConfig(latent_dim=64, n_splats_init=0, max_splats=2)
         store = SplatStorage(config)
         store.add_splat(torch.randn(64))
@@ -225,8 +225,8 @@ class TestSplatStorage:
         assert not added
 
     def test_find_neighbors(self):
-        from config import EBMConfig
-        from splats import SplatStorage
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
         config = EBMConfig(latent_dim=64, n_splats_init=20, max_splats=50, knn_k=5)
         store = SplatStorage(config)
         x = torch.randn(4, 64)
@@ -237,8 +237,8 @@ class TestSplatStorage:
         assert kappa.shape == (4, 5)
 
     def test_normalize_preserves(self):
-        from config import EBMConfig
-        from splats import SplatStorage
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
         config = EBMConfig(latent_dim=64, n_splats_init=10, max_splats=50)
         store = SplatStorage(config)
         store.normalize()
@@ -246,15 +246,15 @@ class TestSplatStorage:
         assert torch.allclose(norms, torch.ones_like(norms), atol=1e-5)
 
     def test_empty_splats(self):
-        from config import EBMConfig
-        from splats import SplatStorage
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
         config = EBMConfig(latent_dim=64, n_splats_init=0, max_splats=10)
         store = SplatStorage(config)
         assert store.n_active == 0
 
     def test_many_splats(self):
-        from config import EBMConfig
-        from splats import SplatStorage
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
         config = EBMConfig(latent_dim=64, n_splats_init=0, max_splats=200)
         store = SplatStorage(config)
         for _ in range(200):
@@ -267,8 +267,8 @@ class TestSplatStorage:
 class TestEBMModel:
     @pytest.fixture
     def model(self):
-        from config import EBMConfig
-        from model import EBMModel
+        from ebm.config import EBMConfig
+        from ebm.model import EBMModel
         config = EBMConfig(latent_dim=64, n_splats_init=20, max_splats=50,
                           vocab_size=100, hidden_dim=128, langevin_steps=2,
                           knn_k=10)
@@ -302,8 +302,8 @@ class TestEBMModel:
         assert samples.shape == (2, 64)
 
     def test_custom_config(self):
-        from config import EBMConfig
-        from model import EBMModel
+        from ebm.config import EBMConfig
+        from ebm.model import EBMModel
         config = EBMConfig(latent_dim=32, n_splats_init=5, max_splats=10,
                           vocab_size=50, hidden_dim=64, langevin_steps=1)
         m = EBMModel(config)
@@ -315,7 +315,7 @@ class TestEBMModel:
 class TestScoreNetwork:
     @pytest.fixture
     def score_net(self):
-        from score_network import ScoreNetwork
+        from ebm.score_network import ScoreNetwork
         return ScoreNetwork(dim=64, hidden_dim=128, n_layers=2)
 
     def test_forward_shape(self, score_net):
@@ -325,7 +325,7 @@ class TestScoreNetwork:
         assert out.shape == (4, 64)
 
     def test_tangent_output(self, score_net):
-        from geometry import project_to_tangent
+        from ebm.geometry import project_to_tangent
         x = torch.randn(4, 64)
         x = x / x.norm(dim=-1, keepdim=True)
         sigma = torch.tensor(0.5)
@@ -361,9 +361,9 @@ class TestScoreNetwork:
 
 class TestSOC:
     def test_compute_order_parameter_zero(self):
-        from config import EBMConfig
-        from splats import SplatStorage
-        from soc import compute_order_parameter
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
+        from ebm.soc import compute_order_parameter
         config = EBMConfig(latent_dim=64, n_splats_init=10, max_splats=50)
         splats = SplatStorage(config)
         # No frequency accumulated
@@ -371,16 +371,16 @@ class TestSOC:
         assert phi == 0.0
 
     def test_history_buffer(self):
-        from soc import HistoryBuffer
+        from ebm.soc import HistoryBuffer
         buf = HistoryBuffer(capacity=10, latent_dim=64)
         for i in range(15):
             buf.push(torch.randn(64), torch.tensor(float(i)))
         assert buf.full
 
     def test_maybe_consolidate_empty(self):
-        from config import EBMConfig
-        from splats import SplatStorage
-        from soc import maybe_consolidate, HistoryBuffer
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
+        from ebm.soc import maybe_consolidate, HistoryBuffer
         config = EBMConfig(latent_dim=64, n_splats_init=10, max_splats=50)
         splats = SplatStorage(config)
         buf = HistoryBuffer(capacity=100, latent_dim=64)
@@ -388,7 +388,7 @@ class TestSOC:
         assert not result  # buffer not full
 
     def test_langevin_state_stagnation(self):
-        from langevin import LangevinState
+        from ebm.langevin import LangevinState
         state = LangevinState(window=3, epsilon=0.1)
         assert not state.is_stagnated()
         for _ in range(10):
@@ -401,8 +401,8 @@ class TestSOC:
 class TestHierarchicalContext:
     @pytest.fixture
     def ctx(self):
-        from config import EBMConfig
-        from context_hierarchy import HierarchicalContext
+        from ebm.config import EBMConfig
+        from ebm.context import HierarchicalContext
         config = EBMConfig(latent_dim=64)
         h = HierarchicalContext(config)
         h.reset(4, torch.device('cpu'))
@@ -432,8 +432,8 @@ class TestHierarchicalContext:
         assert torch.allclose(norms, torch.ones(4), atol=1e-5)
 
     def test_empty_retrieval(self):
-        from config import EBMConfig
-        from context_hierarchy import HierarchicalContext
+        from ebm.config import EBMConfig
+        from ebm.context import HierarchicalContext
         config = EBMConfig(latent_dim=64)
         h = HierarchicalContext(config)
         # Before reset, buffers exist but have default shape
@@ -441,7 +441,7 @@ class TestHierarchicalContext:
         assert isinstance(result, dict)
 
     def test_context_on_sphere_after_updates(self, ctx):
-        from geometry import normalize_sphere
+        from ebm.geometry import normalize_sphere
         x = torch.randn(4, 64)
         x = x / x.norm(dim=-1, keepdim=True)
         for _ in range(5):
@@ -457,9 +457,9 @@ class TestLangevin:
     @pytest.fixture
     def langevin_setup(self):
         torch.manual_seed(42)
-        from config import EBMConfig
-        from splats import SplatStorage
-        from energy import EnergyFunction
+        from ebm.config import EBMConfig
+        from ebm.splats import SplatStorage
+        from ebm.energy import EnergyFunction
         config = EBMConfig(latent_dim=64, n_splats_init=20, max_splats=50,
                           langevin_steps=3, langevin_dt=0.001, langevin_gamma=0.1,
                           knn_k=10)
@@ -468,7 +468,7 @@ class TestLangevin:
         return config, energy_fn
 
     def test_sample_no_nan(self, langevin_setup):
-        from langevin import sample_langevin
+        from ebm.langevin import sample_langevin
         config, energy_fn = langevin_setup
         x_init = torch.randn(2, config.latent_dim)
         x_init = x_init / x_init.norm(dim=-1, keepdim=True)
@@ -476,7 +476,7 @@ class TestLangevin:
         assert not torch.isnan(x).any()
 
     def test_sample_shape(self, langevin_setup):
-        from langevin import sample_langevin
+        from ebm.langevin import sample_langevin
         config, energy_fn = langevin_setup
         x_init = torch.randn(4, config.latent_dim)
         x_init = x_init / x_init.norm(dim=-1, keepdim=True)
@@ -484,7 +484,7 @@ class TestLangevin:
         assert x.shape == (4, config.latent_dim)
 
     def test_single_step(self, langevin_setup):
-        from langevin import langevin_step, LangevinState
+        from ebm.langevin import langevin_step, LangevinState
         config, energy_fn = langevin_setup
         x = torch.randn(2, config.latent_dim)
         x = x / x.norm(dim=-1, keepdim=True)
@@ -495,7 +495,7 @@ class TestLangevin:
         assert not torch.isnan(x_new).any()
 
     def test_different_step_counts(self, langevin_setup):
-        from langevin import sample_langevin
+        from ebm.langevin import sample_langevin
         config, energy_fn = langevin_setup
         x_init = torch.randn(2, config.latent_dim)
         x_init = x_init / x_init.norm(dim=-1, keepdim=True)
@@ -512,7 +512,7 @@ class TestLangevin:
 class TestEBMEvaluator:
     @pytest.fixture
     def evaluator(self):
-        from evaluation import EBMEvaluator
+        from ebm.evaluation import EBMEvaluator
         return EBMEvaluator()
 
     def test_energy_stats(self, evaluator):

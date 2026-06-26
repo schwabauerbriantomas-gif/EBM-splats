@@ -16,11 +16,11 @@ import numpy as np
 from unittest.mock import patch, MagicMock
 
 # Project root is on sys.path via conftest.py
-from config import EBMConfig
-from decoder import EBMDecoder, MoELayer
-from score_network import ScoreNetwork
-from geometry import normalize_sphere, project_to_tangent, exp_map
-from logger import TrainingLogger
+from ebm.config import EBMConfig
+from ebm.decoder import EBMDecoder, MoELayer
+from ebm.score_network import ScoreNetwork
+from ebm.geometry import normalize_sphere, project_to_tangent, exp_map
+from ebm.logger import TrainingLogger
 
 
 # ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ def dummy_latent(config):
 
 class TestTextFileDataset:
     def test_length_and_getitem(self):
-        from dataset_loader import TextFileDataset
+        from ebm.data_loader import TextFileDataset
         tokens = list(range(100))
         ds = TextFileDataset(tokens, seq_len=10)
         assert len(ds) == 10
@@ -70,26 +70,26 @@ class TestTextFileDataset:
         assert item.tolist() == list(range(10))
 
     def test_getitem_last_chunk(self):
-        from dataset_loader import TextFileDataset
+        from ebm.data_loader import TextFileDataset
         tokens = list(range(100))
         ds = TextFileDataset(tokens, seq_len=10)
         item = ds[9]
         assert item.tolist() == list(range(90, 100))
 
     def test_empty_tokens(self):
-        from dataset_loader import TextFileDataset
+        from ebm.data_loader import TextFileDataset
         ds = TextFileDataset([], seq_len=10)
         assert len(ds) == 0
 
     def test_tokens_less_than_seq_len(self):
-        from dataset_loader import TextFileDataset
+        from ebm.data_loader import TextFileDataset
         ds = TextFileDataset([1, 2, 3], seq_len=10)
         assert len(ds) == 0
 
 
 class TestTokenizeFile:
     def test_tokenize_file(self, tmp_path):
-        from dataset_loader import tokenize_file
+        from ebm.data_loader import tokenize_file
         filepath = tmp_path / "test.txt"
         filepath.write_text("Hello world. This is a test.", encoding="utf-8")
 
@@ -101,7 +101,7 @@ class TestTokenizeFile:
         assert result == [1, 2, 3, 4, 5]
 
     def test_tokenize_file_max_chars(self, tmp_path):
-        from dataset_loader import tokenize_file
+        from ebm.data_loader import tokenize_file
         filepath = tmp_path / "test.txt"
         filepath.write_text("A" * 1000, encoding="utf-8")
 
@@ -116,18 +116,18 @@ class TestTokenizeFile:
 
 class TestGetDataloaderFactory:
     def test_unknown_dataset_raises(self):
-        from dataset_loader import get_dataloader
+        from ebm.data_loader import get_dataloader
         with pytest.raises(ValueError, match="Unknown dataset"):
             get_dataloader("nonexistent_dataset")
 
     @patch("dataset_loader.os.path.exists", return_value=False)
     def test_tinystories_missing_file_raises(self, mock_exists):
-        from dataset_loader import get_tinystories_dataloader
+        from ebm.data_loader import get_tinystories_dataloader
         with pytest.raises(FileNotFoundError):
             get_tinystories_dataloader(split="train")
 
     def test_tinystories_invalid_split_raises(self):
-        from dataset_loader import get_tinystories_dataloader
+        from ebm.data_loader import get_tinystories_dataloader
         with pytest.raises(ValueError, match="Unknown split"):
             get_tinystories_dataloader(split="invalid")
 
@@ -138,7 +138,7 @@ class TestGetDataloaderFactory:
 
 class TestDatasetUtils:
     def test_text_dataset(self):
-        from dataset_utils import TextDataset
+        from ebm.data import TextDataset
         tokens = list(range(80))
         ds = TextDataset(tokens, seq_len=16)
         assert len(ds) == 5
@@ -147,12 +147,12 @@ class TestDatasetUtils:
         assert item.dtype == torch.long
 
     def test_text_dataset_empty(self):
-        from dataset_utils import TextDataset
+        from ebm.data import TextDataset
         ds = TextDataset([], seq_len=16)
         assert len(ds) == 0
 
     def test_get_dataloader_returns_loader_and_tokenizer(self):
-        from dataset_utils import get_dataloader
+        from ebm.data import get_dataloader
         with patch('dataset_utils.load_dataset') as mock_load, \
              patch('dataset_utils.AutoTokenizer') as mock_tok_cls:
             # Create a mock dataset that has a select method
@@ -541,7 +541,7 @@ class TestTrainTinyStories:
     def test_dsm_loss_fn_importable(self, small_config):
         # Import ScoreNetwork from its module, NOT from train_tinystories
         # (train_tinystories runs heavy init at module level)
-        from score_network import ScoreNetwork
+        from ebm.score_network import ScoreNetwork
         assert ScoreNetwork is not None
 
     def test_embedder_class(self, small_config):
@@ -599,7 +599,7 @@ class TestEvaluate:
 
     def test_save_and_load_checkpoint(self, tmp_path, small_config):
         from evaluate import save_checkpoint, load_checkpoint
-        from model import EBMModel
+        from ebm.model import EBMModel
 
         model = EBMModel(small_config)
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)

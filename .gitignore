@@ -1,28 +1,37 @@
+# Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
 *.egg-info/
+*.egg
 dist/
 build/
 .eggs/
-*.egg
-Thumbs.db
-.idea/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
 .vscode/
+.idea/
 *.swp
 *.swo
-_fix_encoding.py
 
-# Model checkpoints (too large for git)
+# OS
+.DS_Store
+Thumbs.db
+
+# Project artifacts
+*.log
+results.tsv
 pglf_checkpoints/
-checkpoints_autoresearch/
 *.pt
-*.bin
-*.onnx
+*.ckpt
 *.safetensors
 
-# Data files
-*.tsv
-data_test_final.txt
-exp_baseline.txt
-test_results_full.txt
+# Environment
+.env
+venv/
+.venv/
