@@ -5,16 +5,57 @@ build-backend = "setuptools.backends._legacy:_Backend"
 [project]
 name = "ebm-splats"
 version = "2.0.0"
-description = "Energy-Based Model for language generation on a 640D hypersphere with Gaussian Splats and Langevin dynamics"
+description = "Energy-Based Model with Gaussian Splats on a 640D hypersphere — archived research project"
 readme = "README.md"
-license = "Apache-2.0"
+license = { text = "Apache-2.0" }
 requires-python = ">=3.10"
+authors = [{ name = "Brian Schwabauer" }]
+keywords = ["energy-based-model", "gaussian-splats", "riemannian", "langevin-dynamics", "sentence-embeddings"]
+classifiers = [
+    "Development Status :: 7 - Inactive",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.24",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
-vulkan = []
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+nlp = [
+    "sentence-transformers>=2.2",
+    "transformers>=4.30",
+    "datasets>=2.10",
+]
+gpu = [
+    "faiss-cpu>=1.7",
+]
+service = [
+    "flask>=3.0",
+]
+all = [
+    "ebm-splats[dev,nlp,gpu,service]",
+]
+
+[project.scripts]
+ebm-embed-service = "pglf.embedding_service:main"
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["ebm*", "pglf*"]
 
 [tool.pytest.ini_options]
-testpaths = ["."]
-python_files = ["test_*.py", "smoke_test.py"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
 addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

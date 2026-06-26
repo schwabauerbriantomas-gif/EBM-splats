@@ -17,16 +17,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # conftest.py at project root handles sys.path
-from config import EBMConfig
-from geometry import normalize_sphere, project_to_tangent, exp_map
-from splats import SplatStorage
-from energy import EnergyFunction
+from ebm.config import EBMConfig
+from ebm.geometry import normalize_sphere, project_to_tangent, exp_map
+from ebm.splats import SplatStorage
+from ebm.energy import EnergyFunction
 from energy_cuda import EnergyFunctionCUDA
-from score_network import ScoreNetwork
-from langevin import sample_langevin, langevin_step, LangevinState
-from model import EBMModel
-from context_hierarchy import HierarchicalContext
-from evaluation import EBMEvaluator
+from ebm.score_network import ScoreNetwork
+from ebm.langevin import sample_langevin, langevin_step, LangevinState
+from ebm.model import EBMModel
+from ebm.context import HierarchicalContext
+from ebm.evaluation import EBMEvaluator
 from evaluate import compute_perplexity, compute_energy_metrics, compute_convergence_metrics
 
 
@@ -130,7 +130,7 @@ VULKAN = pytest.mark.skipif(not _vulkan_available(), reason="Vulkan not availabl
 class TestVulkanEngine:
     def test_vulkan_runner_creation(self):
         """Instantiation may fail at runtime (no AMD GPU); we test the class exists."""
-        from vulkan_engine import VulkanEBMRunner
+        from ebm.vulkan import VulkanEBMRunner
         # Don't actually instantiate — it requires real Vulkan device
         assert callable(VulkanEBMRunner)
 

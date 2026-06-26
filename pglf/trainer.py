@@ -27,10 +27,10 @@ from .pareto_filter import ParetoFilter
 # EBM-splats components (reuse)
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from geometry import project_to_tangent, normalize_sphere
-from langevin import sample_langevin
-from energy import EnergyFunction
-from splats import SplatStorage
+from ebm.geometry import project_to_tangent, normalize_sphere
+from ebm.langevin import sample_langevin
+from ebm.energy import EnergyFunction
+from ebm.splats import SplatStorage
 
 
 class TextEmbeddingDataset(Dataset):
@@ -141,7 +141,7 @@ class PGLFTrainer:
     def init_ebm_components(self):
         """Initialize EBM-splats components for Langevin exploration."""
         try:
-            from config import EBMConfig
+            from ebm.config import EBMConfig
             config = EBMConfig()
             self.splat_store = SplatStorage(
                 n_splats=config.max_splats,
