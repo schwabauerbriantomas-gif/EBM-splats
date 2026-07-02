@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-TEST 1.2: PGLF Grid Search — ¿Puede alguna config superar MiniLM baseline?
+TEST 1.2: PGLF Grid Search — Can any config beat the MiniLM baseline?
 
-Hipótesis: el -4.7% fue por init conservador (gain=0.1), 1 epoch, 50K pares.
-Si alguna config supera 0.8672 → PGLF tiene potencial.
-Si ninguna supera → descartar PGLF para embeddings unimodales.
+Hypothesis: the -4.7% was due to conservative init (gain=0.1), 1 epoch, 50K pairs.
+If any config beats 0.8672 → PGLF has potential.
+If none beats → discard PGLF for unimodal embeddings.
 
 Grid:
   - data_size: 50K, 200K, 500K
@@ -13,9 +13,9 @@ Grid:
   - lr: 1e-4, 5e-4, 1e-3
   - temperature: 0.05, 0.07, 0.1
 
-Para no explotar el grid (3^5=243 configs), usamos estrategia:
-  Fase A: Variar UN parámetro a la vez desde baseline (15 configs)
-  Fase B: Si alguna mejora, explorar alrededor (10 configs más)
+To avoid exploding the grid (3^5=243 configs), we use a strategy:
+  Phase A: Vary ONE parameter at a time from baseline (15 configs)
+  Phase B: If any improves, explore around it (10 more configs)
 """
 
 import time

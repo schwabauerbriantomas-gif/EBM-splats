@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
-PHASE 2 — TEST: Energy-Guided Generation con Rectified Flow
+PHASE 2 — TEST: Energy-Guided Generation with Rectified Flow
 
-Hipótesis: Manipular la energía de splats específicas permite controlar
-qué tipo de contenido se genera. Sumar energía a splats de tópico A
-y restar energía de splats de tópico B debería producir samples
-semánticamente más cercanos a A y más lejos de B.
+Hypothesis: Manipulating the energy of specific splats allows controlling
+what type of content is generated. Adding energy to topic A splats
+and subtracting energy from topic B splats should produce samples
+semantically closer to A and farther from B.
 
 Setup:
-  1. Embed 10K TinyStories con MiniLM → distribución en S^383
-  2. Cluster en ~50 tópicos via KMeans
-  3. Inicializar splats desde centros de cluster
-  4. Entrenar RF velocity network en la distribución completa
-  5. Sampling baseline (sin guía) vs sampling guiado (boost/suppress)
-  6. Decoding via nearest-neighbor retrieval (no neural decoder necesario)
-  7. Medir: ¿los samples guiados retrieval textos del tópico correcto?
+  1. Embed 10K TinyStories with MiniLM → distribution on S^383
+  2. Cluster into ~50 topics via KMeans
+  3. Initialize splats from cluster centers
+  4. Train RF velocity network on the full distribution
+  5. Baseline sampling (no guidance) vs guided sampling (boost/suppress)
+  6. Decoding via nearest-neighbor retrieval (no neural decoder needed)
+  7. Measure: do guided samples retrieve texts from the correct topic?
 
-Métrica: para cada sample, medir a qué tópico pertenece el nearest-neighbor
-en el corpus. Si la guía funciona, los samples guiados hacia tópico A
-deberían recuperar más textos de A que los samples baseline.
+Metric: for each sample, measure which topic the nearest-neighbor
+in the corpus belongs to. If guidance works, samples guided toward
+topic A should retrieve more texts from A than baseline samples.
 """
 
 import time

@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """
-TEST 1.3: OOD Detection con Energía EBM
+TEST 1.3: OOD Detection with EBM Energy
 
-Hipótesis: La energía del EBM (función de splats gaussianos) discrimina
-muestras in-distribution (ID) vs out-of-distribution (OOD).
+Hypothesis: The EBM energy (Gaussian splat function) discriminates
+in-distribution (ID) vs out-of-distribution (OOD) samples.
 
-Si AUROC > 0.75 → la energía tiene valor práctico para cuantificar incertidumbre.
-Si AUROC ~ 0.5 → la energía no discrimina, descartar para OOD.
+If AUROC > 0.75 → the energy has practical value for quantifying uncertainty.
+If AUROC ~ 0.5 → the energy does not discriminate, discard for OOD.
 
 Setup:
-  1. Generar 10K embeddings ID con MiniLM de textos normales (WikiText)
-  2. Generar embeddings OOD de:
-     - Código Python (distribución muy distinta)
-     - Texto aleatorio (random tokens)
-     - Otros idiomas (chino, árabe)
-  3. Crear SplatStorage con embeddings ID
-  4. Para cada embedding (ID + OOD), computar energía
-  5. Calcular AUROC: ¿la energía distingue ID de OOD?
+  1. Generate 10K ID embeddings with MiniLM from normal texts (WikiText)
+  2. Generate OOD embeddings from:
+     - Python code (very different distribution)
+     - Random text (random tokens)
+     - Other languages (Chinese, Arabic)
+  3. Create SplatStorage with ID embeddings
+  4. For each embedding (ID + OOD), compute energy
+  5. Calculate AUROC: does the energy distinguish ID from OOD?
 """
 
 import time
