@@ -1,87 +1,67 @@
 # EBM-Splats
 
-> **Status: ARCHIVED** — Research concluded April 2026. Negative result: the PGLF approach degraded sentence embedding quality by 4.7% vs baseline. Repository preserved for methodological reference and code salvage.
+> **Status: ACTIVE RESEARCH** — Phase 1 empirical tests complete (July 2026). PGLF embedding approach descartado. EBM generador con Rectified Flow en exploración.
 
-## Summary
+Energy-Based Model con Gaussian Splats en hiperesfera 640D. Explora representaciones distribucionales para espacios latentes, sampling por Langevin dynamics y Rectified Flow.
 
-An exploration of **Energy-Based Models** combined with **Gaussian Splats** on a Riemannian hypersphere (S^639) for continuous language representation. The project evolved through two phases:
+## Fases del proyecto
 
-1. **Phase 1 (EBM)**: Language generation via Langevin dynamics sampling on a splat-based energy landscape
-2. **Phase 2 (PGLF)**: Pareto-Guided Langevin Flow — sentence embeddings using a custom projection + contrastive loss on top of MiniLM-L6-v2
+### Phase 1: EBM + PGLF (Abril 2026) — Descartado
 
-The central hypothesis was that representing text as **Gaussian distributions** (splats) rather than point vectors could capture semantic uncertainty and improve embedding quality. The experiment disproved this hypothesis for unimodal text similarity.
+EBM con splats gaussianos como atractores en S^639 + PGLF (proyección sobre MiniLM con loss contrastivo).
 
-## Key Result
+**Resultado:** PGLF degradó MiniLM en STS-B (-4.7%). La proyección sobre embeddings pre-entrenados siempre destruye la geometría.
 
-| Model | STS-B Spearman | Δ |
-|---|---|---|
-| MiniLM-L6-v2 (baseline) | **0.8672** | — |
-| PGLF + MiniLM-L6-v2 | 0.8264 | **-4.7%** |
+### Phase 1 Empírica: Tests de descarte (Julio 2026)
 
-PGLF degraded performance. Adding a projection layer and training on 50K SNLI pairs disrupted the carefully optimized embedding geometry of the pre-trained backbone.
+3 tests empíricos para descartar o confirmar alternativas. RTX 3090, datos reales.
 
-## What Was Salvaged
+| Test | Hipótesis | Resultado | Veredicto |
+|------|-----------|-----------|-----------|
+| PGLF Grid (14 configs) | ¿Alguna config supera MiniLM? | 0/14 superan baseline (0.8672) | **DESCARTADO** |
+| OOD Detection | ¿Energía EBM detecta OOD? | AUROC=1.0 pero NN=0.999 | **SIN VENTAJA** |
+| RF vs Langevin | ¿RF soluciona bottleneck de velocidad? | 24-29x más rápido, mejor calidad | **CONFIRMADO** |
 
-- **Embedding service** (`pglf/embedding_service.py`) — integrated into [M2M-Rust](https://github.com/brian-corrientes/m2m-rust) as production embedding provider
-- **NaN debugging techniques** for contrastive losses (Gaussian kernel + clamping)
-- **Training pipeline patterns** (score matching, Langevin dynamics, flow matching)
-- **Autoresearch protocol** (5-minute experiment loop adapted from Karpathy)
+**Hallazgo clave:** El argumento de "200 pasos Langevin por token" ya no aplica. Rectified Flow con 1-2 pasos produce mejores samples que Langevin con 200 pasos, 24x más rápido.
 
-## Repository Structure
+### Phase 2: EBM Generador con RF — En exploración
+
+Nuevo enfoque: EBM como generador que aprende su propio espacio latente (no como capa sobre modelos pre-entrenados), con sampling por Rectified Flow.
+
+## Estructura del repo
 
 ```
-ebm-splats/
-├── src/ebm/              Core EBM modules
-│   ├── config.py         EBMConfig dataclass (110 parameters)
-│   ├── geometry.py       Riemannian ops (exp_map, log_map, geodesic_distance)
-│   ├── splats.py         SplatStorage — KNN-indexed Gaussian attractors
-│   ├── energy.py         EnergyFunction — splat + geometric + compositional + context
-│   ├── score_network.py  Direct parametric score model (DSM)
-│   ├── langevin.py       Underdamped Langevin sampler on S^639
-│   ├── soc.py            Self-Organized Criticality (adaptive splat addition)
-│   ├── decoder.py        MoE decoder (4 experts, 2 active, vectorized)
-│   ├── context.py        3-level hierarchical context (local/medium/global)
-│   ├── data.py           Dataset utilities (WikiText-103, TinyStories)
-│   ├── data_loader.py    Streaming dataset loader
-│   ├── evaluation.py     Perplexity and coverage metrics
-│   ├── vulkan.py         Vulkan compute engine (note: simulated CPU fallback)
-│   └── cuda/energy.py    CUDA-native energy computation
-├── pglf/                 PGLF extension (sentence embeddings)
-│   ├── encoders.py       TextEncoder (6-layer Transformer, 640D)
-│   ├── contrastive_head.py  InfoNCE + alignment/uniformity losses
-│   ├── embedding_service.py HTTP embedding service (salvaged into M2M)
-│   ├── flow_matching.py  OT-CFM conditional flow matching
-│   ├── pareto_filter.py  Multi-objective non-dominated sorting
-│   ├── service.py        PGLF inference service
-│   └── trainer.py        3-phase training orchestration
-├── scripts/              Training and evaluation scripts
-├── experiments/          One-off experiments and diagnostics
-├── tests/                Unit and integration tests
-├── docs/                 Architecture, methodology, specifications
-└── shaders/              Vulkan compute shaders (SPIR-V)
+├── config.py              # EBMConfig — configuración V2
+├── energy.py              # EnergyFunction — splats + geom + comp energy
+├── geometry.py            # Operaciones Riemannianas (exp_map, log_map, tangent)
+├── splats.py              # SplatStorage — gaussianas direccionales
+├── score_network.py       # ScoreNetwork — denoising score matching
+├── langevin.py            # Langevin dynamics (underdamped)
+├── decoder.py             # MoE decoder (S^639 → vocab)
+├── context_hierarchy.py   # Contexto jerárquico (local/medium/global)
+├── model.py               # EBMModel — integración completa
+├── train_rectified_flow.py # Rectified Flow sampler (SPEC 3)
+├── pglf/                  # PGLF (archivado — descartado empíricamente)
+├── tests/
+│   ├── phase1_t11_rf_vs_langevin.py    # Test RF vs Langevin
+│   ├── phase1_t12_pglf_grid.py         # Test PGLF grid search
+│   ├── phase1_t13_ood_energy.py        # Test OOD detection
+│   └── t1*_results.jsonl               # Resultados raw
+├── docs/
+│   └── PHASE1_RESULTS.md  # Reporte completo Fase 1
+└── benchmark_results/     # Benchmarks previos
 ```
+
+## Resultados detallados
+
+Ver [`docs/PHASE1_RESULTS.md`](docs/PHASE1_RESULTS.md) para el reporte completo de tests empíricos.
 
 ## Tech Stack
 
-- **Python 3.10+**, **PyTorch** (CUDA 12.4, RTX 3090)
-- **sentence-transformers**, **HuggingFace datasets**
-- **FAISS** (KNN for splat neighbor search)
-- **Flask** (embedding service HTTP API)
-- **Rust** (M2M integration via HTTP)
+- Python, PyTorch (CUDA 12.4, RTX 3090)
+- sentence-transformers, HuggingFace datasets
+- Rust (M2M integration via HTTP)
 
-## Installation
-
-```bash
-# Archived project — for reference only
-pip install -e .[dev]
-```
-
-## Lessons Learned
-
-- **Negative results are results.** Knowing what doesn't work saves future investment.
-- **Don't compete with scale.** A 30M param model trained on 50K examples won't beat a 22M param model trained on 1B+ examples.
-- **Validate early.** 35 seconds of training answered the question that weeks of architecture design couldn't.
-
-## License
+## Licencia
 
 Apache-2.0
