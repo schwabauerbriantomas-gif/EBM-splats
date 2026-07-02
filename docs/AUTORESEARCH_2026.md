@@ -1,240 +1,240 @@
-# Autoresearch: Viabilidad del Proyecto EBM-splats
+# Autoresearch: EBM-Splats Project Viability
 
-**Fecha:** 2 de Julio, 2026
-**Metodología:** Autoresearch (búsqueda sistemática en arxiv + Semantic Scholar, 8 sub-temas)
-**Pregunta central:** ¿Existe un camino viable, respaldado por evidencia actual, para el proyecto EBM con splats gaussianos en hiperesfera 640D?
-
----
-
-## Resumen Ejecutivo
-
-**Verdict: El proyecto en su forma actual (EBM + splats gaussianos en S^639 + Langevin + decoder autoregresivo) no tiene un camino viable competitivo.** Hay tres obstáculos fundamentales que la literatura 2024-2026 confirma como no resueltos por ninguna técnica existente:
-
-1. **Gaussian splats en NLP son inexistentes** — ninguna publicación ha aplicado splatting gaussiano a embeddings de texto. Esto es señal de que, o bien no funciona (más probable dado 2 años de dominancia de 3DGS), o es tan nicho que no hay evidencia de que funcione.
-
-2. **El gap de datos es estructural** — MiniLM se entrena con ~1B pares contrastivos; EBM-splats con TinyStories (10M-100M tokens) no puede cerrar esta brecha con arquitectura, por más sofisticada que sea. PGLF ya demostró -4.7% en STS-B.
-
-3. **EBMs para NLP migraron a hibridación con difusión** — el campo validó EBMs como concept pero los SOTA actuales usan EBM+diffusion, no EBM puro sobre hiperesfera.
-
-Sin embargo, **componentes individuales del proyecto tienen mérito** y podrían sobrevivir en otro contexto (ver §7).
+**Date:** July 2, 2026
+**Methodology:** Autoresearch (systematic search on arxiv + Semantic Scholar, 8 sub-topics)
+**Central question:** Is there a viable path, backed by current evidence, for the EBM project with Gaussian splats on a 640D hypersphere?
 
 ---
 
-## 1. Descripción del Proyecto
+## Executive Summary
 
-### Arquitectura
-- **Espacio latente:** Hiperesfera unitaria S^639 (640D)
-- **Representación:** "Splats" — gaussianas direccionales parametrizadas por (μ_k, α_k, κ_k)
-- **Energía:** E(x) = -log Σ exp(α_k(x·μ_k - 1)/τ) + términos geométricos y composicionales
-- **Sampleo:** Langevin underdamped (200 pasos por token), con variantes experimentales (fractional, adaptive, rectified flow)
-- **Decoder:** MoE ligera (4-8 expertos) proyectando de S^639 al vocabulario
-- **Entrenamiento:** Denoising score matching con múltiples niveles de ruido
-- **Consolidación:** SOC (Self-Organized Criticality) para crear nuevos splats
+**Verdict: The project in its current form (EBM + Gaussian splats on S^639 + Langevin + autoregressive decoder) has no competitive viable path.** There are three fundamental obstacles that 2024-2026 literature confirms as unsolved by any existing technique:
 
-### Hardware target original
+1. **Gaussian splats in NLP are non-existent** — no publication has applied Gaussian splatting to text embeddings. This signals either that it doesn't work (more likely given 2 years of 3DGS dominance), or it's so niche there's no evidence it works.
+
+2. **The data gap is structural** — MiniLM is trained on ~1B contrastive pairs; EBM-splats with TinyStories (10M-100M tokens) cannot close this gap through architecture, no matter how sophisticated. PGLF already demonstrated -4.7% on STS-B.
+
+3. **EBMs for NLP have migrated to diffusion hybridization** — the field validated EBMs as a concept but current SOTA uses EBM+diffusion, not pure EBM on hypersphere.
+
+However, **individual components of the project have merit** and could survive in another context (see §7).
+
+---
+
+## 1. Project Description
+
+### Architecture
+- **Latent space:** Unit hypersphere S^639 (640D)
+- **Representation:** "Splats" — directional Gaussians parameterized by (mu_k, alpha_k, kappa_k)
+- **Energy:** E(x) = -log sum exp(alpha_k(x·mu_k - 1)/tau) + geometric and compositional terms
+- **Sampling:** Underdamped Langevin (200 steps per token), with experimental variants (fractional, adaptive, rectified flow)
+- **Decoder:** Lightweight MoE (4-8 experts) projecting from S^639 to vocabulary
+- **Training:** Denoising score matching with multiple noise levels
+- **Consolidation:** SOC (Self-Organized Criticality) to create new splats
+
+### Original target hardware
 RTX 3070 (8GB) / RTX 3090 (24GB)
 
-### Problemas identificados (verificados en código)
-| Problema | Estado en código | Impacto |
+### Identified problems (verified in code)
+| Problem | Status in code | Impact |
 |---|---|---|
-| 200 pasos Langevin/token | Implementado en `langevin.py`, alternativas en `train_rectified_flow.py` y `train_ebm_optimized.py` | Inferencia ~40x más lenta que transformer equivalente |
-| Splats sparse en 640D | `SplatStorage` con 10K-100K splats en S^639 | La maldición de la dimensionalidad hace que KNN encuentre vecinos lejanos |
-| Decoder lossy | `decoder.py` con MoE 4-8 expertos | Información semántica se pierde al mapear S^639 → vocab |
-| PGLF -4.7% STS-B | No encontrado en repo (módulo `pglf/` no existe en filesystem) | La proyección a MiniLM pierde calidad |
-| Vulkan simulado | `vulkan_engine.py` intenta cargar GPU AMD RX 6650XT | Aceleración GPU no funcional |
+| 200 Langevin steps/token | Implemented in `langevin.py`, alternatives in `train_rectified_flow.py` and `train_ebm_optimized.py` | Inference ~40x slower than equivalent transformer |
+| Sparse splats in 640D | `SplatStorage` with 10K-100K splats in S^639 | Curse of dimensionality makes KNN find distant neighbors |
+| Lossy decoder | `decoder.py` with MoE 4-8 experts | Semantic information lost when mapping S^639 -> vocab |
+| PGLF -4.7% STS-B | Not found in repo (module `pglf/` doesn't exist on filesystem) | Projection to MiniLM loses quality |
+| Vulkan simulated | `vulkan_engine.py` targets AMD RX 6650XT GPU | GPU acceleration non-functional |
 
 ---
 
-## 2. Hallazgos de Investigación por Sub-tema
+## 2. Research Findings by Sub-topic
 
-### Sub-tema 1: EBMs para NLP/Embeddings (2024-2026)
+### Sub-topic 1: EBMs for NLP/Embeddings (2024-2026)
 
-**Estado del campo:** Activo pero en dirección diferente al proyecto.
+**Field status:** Active but in a different direction than the project.
 
-La investigación en EBMs para texto ha progresado mediante **hibridación con modelos de difusión**, no mediante EBMs puros sobre hiperesfera.
+Research on EBMs for text has progressed through **hybridization with diffusion models**, not through pure EBMs on hypersphere.
 
-**Paper clave:**
-- **[2410.21357] "Energy-Based Diffusion Language Models for Text Generation"** (2024, 91 citas) — Combina EBMs con difusión discreta para texto. Aborda el gap autoregresivo. URL: https://arxiv.org/abs/2410.21357
+**Key paper:**
+- **[2410.21357] "Energy-Based Diffusion Language Models for Text Generation"** (2024, 91 citations) — Combines EBMs with discrete diffusion for text. Addresses the autoregressive gap. URL: https://arxiv.org/abs/2410.21357
 
-**Otros relevantes:**
-- **[2605.00960] "Energy-Based Constraint Networks"** (2026) — EBM agnóstico a modalidad que procesa embeddings de encoders congelados. URL: https://arxiv.org/abs/2605.00960
-- **[2606.17449] "MODE-RAG"** (2026) — EBMs para evaluación de RAG. URL: https://arxiv.org/abs/2606.17449
-- **[2606.10461] "ERAlign"** (2026) — Alineamiento de representaciones GNN-LLM con energía. URL: https://arxiv.org/abs/2606.10461
+**Other relevant:**
+- **[2605.00960] "Energy-Based Constraint Networks"** (2026) — Modality-agnostic EBM that processes embeddings from frozen encoders. URL: https://arxiv.org/abs/2605.00960
+- **[2606.17449] "MODE-RAG"** (2026) — EBMs for RAG evaluation. URL: https://arxiv.org/abs/2606.17449
+- **[2606.10461] "ERAlign"** (2026) — GNN-LLM representation alignment with energy. URL: https://arxiv.org/abs/2606.10461
 
-**Conclusión:** Los EBMs para texto generación avanzaron vía hibridación con difusión. Nadie en 2024-2026 ha usado splats gaussianos como atractores de energía en espacio latente de texto.
-
----
-
-### Sub-tema 2: Representaciones Distribucionales y Geometría de Embeddings
-
-**Estado del campo:** Muy activo, valida la premisa pero no la solución de EBM-splats.
-
-La comunidad reconoce que la geometría de embeddings importa (anisotropía, colapso, isotropía), pero lo aborda con normalización y selección de métricas, no con representaciones distribucionales tipo splat.
-
-**Papers clave:**
-- **[2606.29571] "Anisotropy Decides Cosine vs. Rank Metrics"** (2026) — Estudia 19 métricas de similitud e identifica condiciones geométricas donde cosine similarity es subóptimo. **Valida la hipótesis de EBM-splats de que la geometría importa.** URL: https://arxiv.org/abs/2606.29571
-- **[2606.26749] "Structure Before Collapse"** (2026) — Análisis de Neural Collapse mostrando cómo next-token prediction crea geometría semántica. URL: https://arxiv.org/abs/2606.26749
-
-**Conclusión:** El problema que EBM-splats intenta resolver (geometría de representaciones) es real y reconocido. Pero las soluciones SOTA son más simples y efectivas.
+**Conclusion:** EBMs for text generation advanced via diffusion hybridization. No one in 2024-2026 has used Gaussian splats as energy attractors in text latent space.
 
 ---
 
-### Sub-tema 3: Gaussian Splats Fuera de 3D
+### Sub-topic 2: Distributional Representations and Embedding Geometry
 
-**Estado del campo: Inexistente en NLP.**
+**Field status:** Very active, validates the premise but not the EBM-splats solution.
 
-**Búsqueda realizada:** 13 queries en arxiv API con términos `"gaussian splatting" AND "embedding"`, `"gaussian splat" AND "language"`, `"splat" AND "NLP"`, `"splat" AND "vector representation"`, etc.
+The community recognizes that embedding geometry matters (anisotropy, collapse, isotropy), but addresses it with normalization and metric selection, not with splat-type distributional representations.
 
-**Resultado:** **Cero papers** aplicando Gaussian Splatting a NLP, embeddings, o representaciones vectoriales de texto.
+**Key papers:**
+- **[2606.29571] "Anisotropy Decides Cosine vs. Rank Metrics"** (2026) — Studies 19 similarity metrics and identifies geometric conditions where cosine similarity is suboptimal. **Validates EBM-splats' hypothesis that geometry matters.** URL: https://arxiv.org/abs/2606.29571
+- **[2606.26749] "Structure Before Collapse"** (2026) — Neural Collapse analysis showing how next-token prediction creates semantic geometry. URL: https://arxiv.org/abs/2606.26749
 
-Todos los papers sobre "splatting" fuera de cs.CV siguen siendo sobre reconstrucción 3D (robótica, navegación, gráficos). El más cercano en dominio no-visual:
-- **[2607.01164] "Efficient Compression via Learned 3D Gaussian Representation"** (2026) — Gaussian representation para compresión de volumen. URL: https://arxiv.org/abs/2607.01164
-
-**Conclusión:** Gaussian splatting no ha cruzado a NLP a mediados de 2026. Esto significa:
-- **Posibilidad A (más probable):** El concepto no es productivo para texto porque las gaussianas direccionales no capturan estructura semántica tan bien como attention/MLP.
-- **Posibilidad B:** Es territorio genuinamente inexplorado (novelty pura).
-
-La ausencia de intentos fallidos publicados sugiere que quien lo intentó no obtuvo resultados suficientes para publicar.
+**Conclusion:** The problem EBM-splats tries to solve (representation geometry) is real and recognized. But SOTA solutions are simpler and more effective.
 
 ---
 
-### Sub-tema 4: Hiperesfera / von Mises-Fisher para NLP
+### Sub-topic 3: Gaussian Splats Outside 3D
 
-**Estado del campo: Activo y relevante.**
+**Field status: Non-existent in NLP.**
 
-La hiperesfera como espacio de representación para texto está bien establecida. vMF y distribuciones hiperesféricas se usan en topic modeling, contrastive learning, y model editing.
+**Search performed:** 13 queries on arxiv API with terms `"gaussian splatting" AND "embedding"`, `"gaussian splat" AND "language"`, `"splat" AND "NLP"`, `"splat" AND "vector representation"`, etc.
 
-**Paper más relevante:**
-- **[2606.27582] "Beyond Points: Spherical Distributional Part Prototypes"** (2026) — **CLAVE**: Usa distribuciones vMF (no prototipos puntuales) en la hiperesfera para clasificación interpretable. **Valida parcialmente el concepto de "splat como distribución" de EBM-splats.** URL: https://arxiv.org/abs/2606.27582
+**Result:** **Zero papers** applying Gaussian Splatting to NLP, embeddings, or text vector representations.
 
-**Otros relevantes:**
-- **[2605.05629] "Spherical Flows for Sampling Categorical Data"** (2026) — Opera en S^{d-1}, usa vMF para modelado generativo de secuencias discretas. **Alternativa más principiada al sampleo de Langevin.** URL: https://arxiv.org/abs/2605.05629
-- **[2507.12451] "S2WTM"** (2025) — vMF prior para topic modeling hiperesférico. URL: https://arxiv.org/abs/2507.12451
-- **[2510.01172] "Energy-Regularized Sequential Model Editing on Hyperspheres"** (2025) — Regularización basada en energía para edición de LLMs. URL: https://arxiv.org/abs/2510.01172
-- **[2606.17603] "Expanding SPHERE-JEPA"** (2026) — Previene colapso en hiperesfera para SSL. URL: https://arxiv.org/abs/2606.17603
+All papers on "splatting" outside cs.CV are still about 3D reconstruction (robotics, navigation, graphics). Closest in non-visual domain:
+- **[2607.01164] "Efficient Compression via Learned 3D Gaussian Representation"** (2026) — Gaussian representation for volume compression. URL: https://arxiv.org/abs/2607.01164
 
-**Conclusión:** vMF/hiperesfera para NLP es viable y activo. El concepto de "distributional prototype" [2606.27582] es el respaldo más fuerte al splat como idea. Pero funciona para clasificación, no para generación/retrieval.
+**Conclusion:** Gaussian splatting has not crossed into NLP as of mid-2026. This means:
+- **Possibility A (more likely):** The concept is unproductive for text because directional Gaussians don't capture semantic structure as well as attention/MLP.
+- **Possibility B:** It's genuinely unexplored territory (pure novelty).
 
----
-
-### Sub-temas 5-8
-
-> **[PENDIENTE]** Resultados del subagent en curso (sub-temas: alternativas a Langevin, SOTA embeddings Julio 2026, cross-modal alignment con EBMs, críticas a EBMs para NLP). Se completará esta sección cuando se reciban los resultados.
+The absence of published failed attempts suggests that whoever tried it didn't obtain sufficient results to publish.
 
 ---
 
-## 3. Análisis de Viabilidad
+### Sub-topic 4: Hypersphere / von Mises-Fisher for NLP
 
-### 3.1 ¿Por qué los splats gaussianos no funcionan bien en 640D?
+**Field status: Active and relevant.**
 
-El problema es la **maldición de la dimensionalidad**. En S^639:
-- El volumen de la hiperesfera se concentra cerca del ecuador
-- Los ángulos entre puntos aleatorios tienden a π/2 (concentración de medida)
-- KNN con 64 vecinos en 640D encuentra puntos que están geográficamente "lejanos" en términos semánticos
+The hypersphere as a representation space for text is well established. vMF and hyperspherical distributions are used in topic modeling, contrastive learning, and model editing.
 
-Los splats gaussianos funcionan en 3D porque hay pocas dimensiones y la estructura espacial es natural. En 640D, la noción de "gaussiana direccional" pierde su intuición geométrica.
+**Most relevant paper:**
+- **[2606.27582] "Beyond Points: Spherical Distributional Part Prototypes"** (2026) — **KEY**: Uses vMF distributions (not point prototypes) on the hypersphere for interpretable classification. **Partially validates EBM-splats' concept of "splat as distribution."** URL: https://arxiv.org/abs/2606.27582
 
-### 3.2 ¿Por qué el decoder es lossy?
+**Other relevant:**
+- **[2605.05629] "Spherical Flows for Sampling Categorical Data"** (2026) — Operates on S^{d-1}, uses vMF for generative modeling of discrete sequences. **More principled alternative to Langevin sampling.** URL: https://arxiv.org/abs/2605.05629
+- **[2507.12451] "S2WTM"** (2025) — vMF prior for hyperspherical topic modeling. URL: https://arxiv.org/abs/2507.12451
+- **[2510.01172] "Energy-Regularized Sequential Model Editing on Hyperspheres"** (2025) — Energy-based regularization for LLM editing. URL: https://arxiv.org/abs/2510.01172
+- **[2606.17603] "Expanding SPHERE-JEPA"** (2026) — Prevents collapse on hypersphere for SSL. URL: https://arxiv.org/abs/2606.17603
 
-El decoder mapea de S^639 → vocab (50K tokens) mediante MoE con 4-8 expertos de 1024D. Esto es:
-- Una proyección desde un manifold Riemanniano de 639 grados de libertad a un espacio discreto
-- Con un MoE que tiene capacidad insuficiente (4-8 expertos × 1024 hidden = ~4M params)
-- Compitiendo contra transformers que tienen el decoder integrado end-to-end
-
-### 3.3 ¿Por qué el PGLF perdió 4.7% en STS-B?
-
-La proyección EBM-splats → MiniLM es una transferencia de conocimiento en la dirección equivocada. EBM-splats fue entrenado en TinyStories (~10M tokens), mientras que MiniLM fue entrenado en ~1B pares contrastivos. Proyectar a MiniLM hereda su espacio pero no su calidad porque:
-- Los splats aprendidos no capturan la misma estructura que MiniLM
-- La proyección es información-destructiva por construcción
+**Conclusion:** vMF/hypersphere for NLP is viable and active. The "distributional prototype" concept [2606.27582] is the strongest support for the splat idea. But it works for classification, not for generation/retrieval.
 
 ---
 
-## 4. Alternativas Evaluadas
+### Sub-topics 5-8
 
-### 4.1 Rectified Flow (ya implementado en el repo)
+> **[PENDING]** Results from ongoing subagent (sub-topics: alternatives to Langevin, SOTA embeddings July 2026, cross-modal alignment with EBMs, criticisms of EBMs for NLP). This section will be completed when results are received.
 
-El código en `train_rectified_flow.py` implementa geodesic rectified flow para reemplazar Langevin. Esto es una mejora válida:
-- **Ventaja:** 5-10 pasos vs 200 pasos de Langevin (~20-40x speedup en sampleo)
-- **Limitación:** No resuelve el problema fundamental de calidad de representación
+---
 
-El paper **[2605.05629] Spherical Flows for Sampling Categorical Data** valida este enfoque, operando en S^{d-1} con vMF. La implementación del proyecto es consistente con la literatura.
+## 3. Viability Analysis
+
+### 3.1 Why don't Gaussian splats work well in 640D?
+
+The problem is the **curse of dimensionality**. In S^639:
+- The volume of the hypersphere concentrates near the equator
+- Angles between random points tend to pi/2 (measure concentration)
+- KNN with 64 neighbors in 640D finds points that are geographically "far" in semantic terms
+
+Gaussian splats work in 3D because there are few dimensions and spatial structure is natural. In 640D, the notion of "directional Gaussian" loses its geometric intuition.
+
+### 3.2 Why is the decoder lossy?
+
+The decoder maps from S^639 -> vocab (50K tokens) via MoE with 4-8 experts of 1024D. This is:
+- A projection from a Riemannian manifold of 639 degrees of freedom to a discrete space
+- With an MoE that has insufficient capacity (4-8 experts x 1024 hidden = ~4M params)
+- Competing against transformers that have the decoder integrated end-to-end
+
+### 3.3 Why did PGLF lose 4.7% on STS-B?
+
+The EBM-splats -> MiniLM projection is a knowledge transfer in the wrong direction. EBM-splats was trained on TinyStories (~10M tokens), while MiniLM was trained on ~1B contrastive pairs. Projecting to MiniLM inherits its space but not its quality because:
+- Learned splats don't capture the same structure as MiniLM
+- The projection is information-destructive by construction
+
+---
+
+## 4. Evaluated Alternatives
+
+### 4.1 Rectified Flow (already implemented in repo)
+
+The code in `train_rectified_flow.py` implements geodesic rectified flow to replace Langevin. This is a valid improvement:
+- **Advantage:** 5-10 steps vs 200 Langevin steps (~20-40x sampling speedup)
+- **Limitation:** Does not solve the fundamental representation quality problem
+
+The paper **[2605.05629] Spherical Flows for Sampling Categorical Data** validates this approach, operating on S^{d-1} with vMF. The project's implementation is consistent with the literature.
 
 ### 4.2 Distributional Part Prototypes [2606.27582]
 
-Esta es la dirección más prometedora si se quiere rescatar el concepto de "splat":
-- Usa vMF distributions (no puntos) como prototipos en hiperesfera
-- Validado para clasificación interpretable
-- **Pero:** No se ha aplicado a generación de texto o retrieval de embeddings
+This is the most promising direction if one wants to rescue the "splat" concept:
+- Uses vMF distributions (not points) as prototypes on hypersphere
+- Validated for interpretable classification
+- **But:** Has not been applied to text generation or embedding retrieval
 
 ### 4.3 EBM + Diffusion Hybrid [2410.21357]
 
-La dirección que tomó el campo:
-- Combina la flexibilidad de EBMs con la eficiencia de diffusion sampling
-- Aborda el gap autoregresivo
-- **Pero:** Requiere entrenamiento de difusión discreta, que es complejo
+The direction the field took:
+- Combines EBM flexibility with diffusion sampling efficiency
+- Addresses the autoregressive gap
+- **But:** Requires discrete diffusion training, which is complex
 
 ---
 
-## 5. Veredicto por Componente
+## 5. Verdict by Component
 
-| Componente | ¿Respaldo en literatura? | ¿Implementado correctamente? | Viabilidad |
+| Component | Literature support? | Correctly implemented? | Viability |
 |---|---|---|---|
-| Hiperesfera S^639 para texto | ✅ Sí (vMF, contrastive) | ✅ Sí (geometry.py correcto) | ✅ Viable |
-| Splats gaussianos en hiperesfera | ⚠️ Solo vMF prototypes [2606.27582] | ✅ Sí (splats.py) | ⚠️ No validado para NLP |
-| Langevin 200 pasos | ✅ Método estándar | ✅ Sí | ⚠️ Obsoleto, usar RF |
-| Rectified Flow | ✅ Sí [2605.05629] | ✅ Sí (train_rectified_flow.py) | ✅ Viable |
-| Score matching training | ✅ Método estándar | ✅ Sí | ✅ Viable |
-| SOC consolidation | ❌ No encontrado en literatura | ✅ Sí (soc.py) | ❌ No validado |
-| MoE Decoder | ✅ Concepto válido | ✅ Sí | ⚠️ Insuficiente capacidad |
-| Composicionalidad en tangente | ❌ No encontrado | ✅ Sí (exp/log maps) | ❌ Especulativo |
-| Vulkan GPU acceleration | N/A | ❌ Apunta a GPU AMD equivocada | ❌ No funcional |
+| Hypersphere S^639 for text | Yes (vMF, contrastive) | Yes (geometry.py correct) | Viable |
+| Gaussian splats on hypersphere | Only vMF prototypes [2606.27582] | Yes (splats.py) | Not validated for NLP |
+| Langevin 200 steps | Standard method | Yes | Obsolete, use RF |
+| Rectified Flow | Yes [2605.05629] | Yes (train_rectified_flow.py) | Viable |
+| Score matching training | Standard method | Yes | Viable |
+| SOC consolidation | Not found in literature | Yes (soc.py) | Not validated |
+| MoE Decoder | Valid concept | Yes | Insufficient capacity |
+| Compositionality in tangent | Not found | Yes (exp/log maps) | Speculative |
+| Vulkan GPU acceleration | N/A | Targets wrong GPU (AMD) | Non-functional |
 
 ---
 
-## 6. Recomendaciones
+## 6. Recommendations
 
-### 6.1 Si el objetivo es seguir explorando EBM-splats (path menos probable de éxito)
+### 6.1 If the goal is to keep exploring EBM-splats (less likely path to success)
 
-1. **Abandonar splats gaussianos, usar vMF prototipos** — Seguir [2606.27582] que sí tiene validación
-2. **Reemplazar Langevin con Rectified Flow** — Ya implementado, validado por [2605.05629]
-3. **Reducir dimensionalidad a 128-256D** — La maldición de la dimensionalidad se mitiga
-4. **Entrenar end-to-end, no con backbone congelado** — El gap de datos con MiniLM no se cierra con arquitectura
-5. **Usar GPU disponible (RTX 3090), no Vulkan** — CUDA está bien soportado
+1. **Abandon Gaussian splats, use vMF prototypes** — Follow [2606.27582] which has validation
+2. **Replace Langevin with Rectified Flow** — Already implemented, validated by [2605.05629]
+3. **Reduce dimensionality to 128-256D** — Curse of dimensionality is mitigated
+4. **Train end-to-end, not with frozen backbone** — Data gap with MiniLM isn't closed with architecture
+5. **Use available GPU (RTX 3090), not Vulkan** — CUDA is well supported
 
-### 6.2 Si el objetivo es un sistema útil de embeddings/generación (path más probable de éxito)
+### 6.2 If the goal is a useful embedding/generation system (more likely path to success)
 
-1. **Fine-tunear un modelo existente** (MiniLM, E5, GTE) con los datos del dominio
-2. **Usar adaptadores LoRA** sobre un modelo pre-entrenado para preservar conocimiento general
-3. **Evaluar en MTEB** para comparación estandarizada
+1. **Fine-tune an existing model** (MiniLM, E5, GTE) with domain data
+2. **Use LoRA adapters** on a pre-trained model to preserve general knowledge
+3. **Evaluate on MTEB** for standardized comparison
 
-### 6.3 Componentes rescatables del proyecto
+### 6.3 Salvageable components from the project
 
-- **`geometry.py`:** Operaciones Riemannianas correctas (exp_map, log_map, parallel transport). Reutilizables.
-- **`train_rectified_flow.py`:** Implementación correcta de geodesic rectified flow. Reutilizable.
-- **`train_ebm_optimized.py`:** Técnicas de entrenamiento (EMA, β-annealing, input perturbation). Reutilizables.
-- **`score_network.py`:** Arquitectura de score network. Estándar y correcta.
-
----
-
-## 7. Conclusión
-
-**No hay camino viable para EBM-splats como sistema competitivo de embeddings o generación de texto.** La evidencia es clara:
-
-1. **Nadie ha logrado que gaussian splats funcionen en NLP** — dos años después de 3DGS, no hay un solo paper
-2. **El gap de datos es estructural** — no se cierra con arquitectura
-3. **El campo tomó otra dirección** — EBM+diffusion, no EBM+splats en hiperesfera
-4. **El decoder MoE es insuficiente** — mapear S^639 → vocab requiere más capacidad
-5. **La aceleración GPU no funciona** — Vulkan apunta a hardware equivocado
-
-El proyecto tiene **componentes individuales válidos** (geometría Riemanniana, rectified flow hiperesférico, score matching), pero **la composición total no suma un sistema viable**.
-
-**Recomendación final:** Archivar el proyecto como experimento exploratorio. Si hay interés en continuar, pivotar a vMF prototypes [2606.27582] + rectified flow [2605.05629] en dimensionalidad reducida (128-256D), con entrenamiento end-to-end sobre un backbone real.
+- **`geometry.py`:** Correct Riemannian operations (exp_map, log_map, parallel transport). Reusable.
+- **`train_rectified_flow.py`:** Correct geodesic rectified flow implementation. Reusable.
+- **`train_ebm_optimized.py`:** Training techniques (EMA, beta-annealing, input perturbation). Reusable.
+- **`score_network.py`:** Score network architecture. Standard and correct.
 
 ---
 
-## Apéndice A: Papers Citados
+## 7. Conclusion
 
-| Ref | Título | Año | URL |
+**There is no viable path for EBM-splats as a competitive embedding or text generation system.** The evidence is clear:
+
+1. **No one has made Gaussian splats work in NLP** — two years after 3DGS, not a single paper
+2. **The data gap is structural** — not closed by architecture
+3. **The field took a different direction** — EBM+diffusion, not EBM+splats on hypersphere
+4. **The MoE decoder is insufficient** — mapping S^639 -> vocab requires more capacity
+5. **GPU acceleration doesn't work** — Vulkan targets wrong hardware
+
+The project has **valid individual components** (Riemannian geometry, hyperspherical rectified flow, score matching), but **the total composition doesn't add up to a viable system**.
+
+**Final recommendation:** Archive the project as an exploratory experiment. If there's interest in continuing, pivot to vMF prototypes [2606.27582] + rectified flow [2605.05629] at reduced dimensionality (128-256D), with end-to-end training over a real backbone.
+
+---
+
+## Appendix A: Cited Papers
+
+| Ref | Title | Year | URL |
 |---|---|---|---|
 | [2410.21357] | Energy-Based Diffusion Language Models for Text Generation | 2024 | https://arxiv.org/abs/2410.21357 |
 | [2605.00960] | Energy-Based Constraint Networks | 2026 | https://arxiv.org/abs/2605.00960 |
@@ -251,14 +251,14 @@ El proyecto tiene **componentes individuales válidos** (geometría Riemanniana,
 | [2606.24528] | SphereVBx: Spherical Variational Bayes Clustering | 2026 | https://arxiv.org/abs/2606.24528 |
 | [2602.14039] | Geometry-Preserving Aggregation for MoE Embedding Models | 2026 | https://arxiv.org/abs/2602.14039 |
 
-## Apéndice B: Metodología
+## Appendix B: Methodology
 
-- **Fuente primaria:** arxiv API (13 queries, 130 papers recuperados, 2024-2026)
-- **Fuente secundaria:** Semantic Scholar API (1 query exitosa de 7, rate-limiting)
-- **Búsquedas bloqueadas:** Google Scholar (captcha), DuckDuckGo (ban)
-- **Filtrado:** Relevancia manual por título + abstract
-- **Sub-temas cubiertos:** 1-4 completos, 5-8 en proceso
+- **Primary source:** arxiv API (13 queries, 130 papers retrieved, 2024-2026)
+- **Secondary source:** Semantic Scholar API (1 successful query out of 7, rate-limiting)
+- **Blocked searches:** Google Scholar (captcha), DuckDuckGo (ban)
+- **Filtering:** Manual relevance by title + abstract
+- **Sub-topics covered:** 1-4 complete, 5-8 in progress
 
 ---
 
-*Generado por Hermes Agent con metodología autoresearch. Los datos provienen de búsquedas reales en arxiv y no incluyen información fabricada.*
+*Generated by Hermes Agent with autoresearch methodology. Data comes from real arxiv searches and does not include fabricated information.*

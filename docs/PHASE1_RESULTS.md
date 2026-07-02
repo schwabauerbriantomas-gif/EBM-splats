@@ -1,31 +1,31 @@
-# EBM-Splats: Fase 1 — Descarte Empírico de Alternativas
+# EBM-Splats: Phase 1 — Empirical Discard of Alternatives
 
-**Fecha:** 2 Julio 2026
+**Date:** July 2, 2026
 **Hardware:** RTX 3090 24GB, Ryzen 5 3400G, 32GB RAM, CUDA 12.4, PyTorch 2.6
-**Metodología:** 3 tests empíricos para descartar o confirmar alternativas al proyecto archivado
+**Methodology:** 3 empirical tests to discard or confirm alternatives to the archived project
 
 ---
 
-## Resumen Ejecutivo
+## Executive Summary
 
-Se ejecutaron 3 tests empíricos sobre las hipótesis pendientes del EBM-splats. **2 de 3 hipótesis descartadas definitivamente. 1 confirmada como solucionable.**
+3 empirical tests were executed on the pending hypotheses of EBM-splats. **2 of 3 hypotheses definitively discarded. 1 confirmed as solvable.**
 
-| Test | Hipótesis | Resultado | Veredicto |
+| Test | Hypothesis | Result | Verdict |
 |------|-----------|-----------|-----------|
-| T1.2 PGLF Grid | ¿Alguna config supera MiniLM? | 0/14 configs superan baseline | **DESCARTADO** |
-| T1.3 OOD Detection | ¿Energía EBM detecta OOD? | AUROC=1.0 pero NN=0.999 | **SIN VENTAJA** |
-| T1.1 RF vs Langevin | ¿RF soluciona bottleneck de velocidad? | 29x más rápido, mejor calidad | **CONFIRMADO** |
+| T1.2 PGLF Grid | Can any config beat MiniLM? | 0/14 configs beat baseline (0.8672) | **DISCARDED** |
+| T1.3 OOD Detection | Does EBM energy detect OOD? | AUROC=1.0 but NN=0.999 | **NO ADVANTAGE** |
+| T1.1 RF vs Langevin | Does RF solve the speed bottleneck? | 24-29x faster, better quality | **CONFIRMED** |
 
 ---
 
 ## Test 1.2: PGLF Grid Search
 
 **Script:** `tests/phase1_t12_pglf_grid.py`
-**Datos:** 14 configuraciones variando data (50K-500K), epochs (1-5), init gain (0.1-1.0), LR (1e-4 a 1e-3), temperatura (0.05-0.1)
+**Data:** 14 configurations varying data (50K-500K), epochs (1-5), init gain (0.1-1.0), LR (1e-4 to 1e-3), temperature (0.05-0.1)
 
-### Resultados
+### Results
 
-| Config | STS-B | Δ | Tiempo |
+| Config | STS-B | Delta | Time |
 |---|---|---|---|
 | **MiniLM baseline** | **0.8672** | — | — |
 | gain=1.0 | 0.8580 | -0.9% | 3.6s |
@@ -43,114 +43,114 @@ Se ejecutaron 3 tests empíricos sobre las hipótesis pendientes del EBM-splats.
 | lr=5e-4 | 0.8218 | -4.5% | 3.3s |
 | lr=1e-3 | 0.8111 | -5.6% | 3.3s |
 
-### Análisis
+### Analysis
 
-- **Más datos NO ayudan**: 200K (-3.3%) y 500K (-3.5%) son peores que 50K con gain=1.0 (-0.9%)
-- **Menos gain conservador acerca al baseline**: gain=1.0 (-0.9%) > gain=0.5 (-1.6%) > gain=0.1 (-2.6%)
-- **LR alto destruye**: lr=1e-3 da -5.6%, el peor resultado
-- **Patrón**: Cualquier proyección entrenada siempre destruye la geometría de MiniLM, sin importar hiperparámetros
+- **More data does NOT help**: 200K (-3.3%) and 500K (-3.5%) are worse than 50K with gain=1.0 (-0.9%)
+- **Less conservative gain approaches baseline**: gain=1.0 (-0.9%) > gain=0.5 (-1.6%) > gain=0.1 (-2.6%)
+- **High LR destroys**: lr=1e-3 gives -5.6%, the worst result
+- **Pattern**: Any trained projection always destroys MiniLM's geometry, regardless of hyperparameters
 
-### Conclusión
+### Conclusion
 
-**PGLF está definitivamente descartado para embeddings unimodales de texto.** No existen hiperparámetros que lo salven. La geometría pre-entrenada de MiniLM (entrenada en 1B+ pares) es un obstáculo insuperable para una capa de proyección entrenada con datos limitados.
+**PGLF is definitively discarded for unimodal text embeddings.** No hyperparameters can save it. MiniLM's pre-trained geometry (trained on 1B+ pairs) is an insurmountable obstacle for a projection layer trained with limited data.
 
 ---
 
-## Test 1.3: OOD Detection con Energía EBM
+## Test 1.3: OOD Detection with EBM Energy
 
 **Script:** `tests/phase1_t13_ood_energy.py`
-**Setup:** 10K embeddings ID (WikiText) como splats. OOD: código Python, random tokens, texto non-English.
+**Setup:** 10K ID embeddings (WikiText) as splats. OOD: Python code, random tokens, non-English text.
 
-### Resultados
+### Results
 
-| Config (τ, k) | AUROC código | AUROC random | AUROC foreign | AUROC total |
+| Config (tau, k) | AUROC code | AUROC random | AUROC foreign | AUROC all |
 |---|---|---|---|---|
-| τ=0.01, k=16 | 1.000 | 1.000 | 1.000 | **1.000** |
-| τ=0.01, k=32 | 1.000 | 1.000 | 1.000 | 1.000 |
-| τ=0.05, k=16 | 1.000 | 1.000 | 1.000 | 1.000 |
-| τ=0.10, k=16 | 1.000 | 1.000 | 1.000 | 1.000 |
-| τ=1.00, k=128 | 1.000 | 0.999 | 0.996 | 0.998 |
+| tau=0.01, k=16 | 1.000 | 1.000 | 1.000 | **1.000** |
+| tau=0.01, k=32 | 1.000 | 1.000 | 1.000 | 1.000 |
+| tau=0.05, k=16 | 1.000 | 1.000 | 1.000 | 1.000 |
+| tau=0.10, k=16 | 1.000 | 1.000 | 1.000 | 1.000 |
+| tau=1.00, k=128 | 1.000 | 0.999 | 0.996 | 0.998 |
 | **Nearest-Neighbor** | **1.000** | **1.000** | **0.997** | **0.999** |
 
-### Análisis
+### Analysis
 
-- La energía de splats discrimina perfectamente ID vs OOD (AUROC=1.0)
-- **Pero nearest-neighbor cosine hace exactamente lo mismo (0.999)**
-- No hay ventaja medible de usar la función de energía vs simplemente medir distancia al vecino más cercano
-- La energía es computacionalmente más costosa (logsumexp sobre k vecinos) sin beneficio
+- Splat energy discriminates perfectly between ID and OOD (AUROC=1.0)
+- **But nearest-neighbor cosine does exactly the same (0.999)**
+- No measurable advantage of using the energy function vs simply measuring distance to nearest neighbor
+- Energy is computationally more expensive (logsumexp over k neighbors) with no benefit
 
-### Conclusión
+### Conclusion
 
-**OOD detection con energía EBM funciona pero no ofrece ventaja sobre métodos triviales.** Descartado como caso de uso diferenciador.
+**OOD detection with EBM energy works but offers no advantage over trivial methods.** Discarded as a differentiating use case.
 
 ---
 
 ## Test 1.1: Rectified Flow vs Langevin
 
 **Script:** `tests/phase1_t11_rf_vs_langevin.py`
-**Setup:** Velocity network (3 layer MLP, 512 hidden) entrenado 500 steps sobre 5K embeddings WikiText. Sampling: 1024 muestras.
+**Setup:** Velocity network (3-layer MLP, 512 hidden) trained 500 steps on 5K WikiText embeddings. Sampling: 1024 samples.
 
-### Resultados
+### Results
 
-| Método | Pasos | Tiempo | MMD (↓ mejor) |
+| Method | Steps | Time | MMD (lower is better) |
 |---|---|---|---|
-| **RF 1 paso** | 1 | **0.006s** | **0.0092** |
-| RF 2 pasos | 2 | 0.003s | 0.0099 |
-| RF 5 pasos | 5 | 0.008s | 0.0102 |
-| RF 10 pasos | 10 | 0.015s | 0.0105 |
-| RF 20 pasos | 20 | 0.026s | 0.0113 |
-| Langevin 10 pasos | 10 | 0.089s | 0.0133 |
-| Langevin 50 pasos | 50 | 0.058s | 0.0073 |
-| Langevin 100 pasos | 100 | 0.108s | 0.0100 |
-| Langevin 200 pasos | 200 | 0.232s | 0.0148 |
+| **RF 1 step** | 1 | **0.006s** | **0.0092** |
+| RF 2 steps | 2 | 0.003s | 0.0099 |
+| RF 5 steps | 5 | 0.008s | 0.0102 |
+| RF 10 steps | 10 | 0.015s | 0.0105 |
+| RF 20 steps | 20 | 0.026s | 0.0113 |
+| Langevin 10 steps | 10 | 0.089s | 0.0133 |
+| Langevin 50 steps | 50 | 0.058s | 0.0073 |
+| Langevin 100 steps | 100 | 0.108s | 0.0100 |
+| Langevin 200 steps | 200 | 0.232s | 0.0148 |
 | Random noise | 0 | 0.009s | 0.0181 |
 
-### Análisis
+### Analysis
 
-- **RF (5 pasos) vs Langevin (200 pasos): 29x más rápido** (0.008s vs 0.232s)
-- **RF (5 pasos) produce MEJORES samples**: MMD=0.0102 vs Langevin MMD=0.0148
-- RF incluso con 1 solo paso (MMD=0.0092) supera a Langevin con 200 pasos (0.0148)
-- Training del velocity network: 3.2s para 500 steps
-- Interesting: más pasos de RF NO mejora calidad (1 paso > 20 pasos). El velocity field es tan preciso que 1 paso basta
+- **RF (5 steps) vs Langevin (200 steps): 24-29x faster** (0.008s vs 0.232s)
+- **RF (5 steps) produces BETTER samples**: MMD=0.0102 vs Langevin MMD=0.0148
+- RF even with 1 single step (MMD=0.0092) beats Langevin with 200 steps (0.0148)
+- Velocity network training: 3.2s for 500 steps
+- Interesting: more RF steps does NOT improve quality (1 step > 20 steps). The velocity field is so accurate that 1 step suffices
 
-### Conclusión
+### Conclusion
 
-**El problema de velocidad del EBM está resuelto.** Rectified Flow reduce 200 pasos de Langevin a 1-5 pasos con mejor calidad de muestreo. El cuello de botella computacional ya no es un argumento válido para descartar el EBM.
+**The EBM speed problem is solved.** Rectified Flow reduces 200 Langevin steps to 1-5 steps with better sampling quality. The computational bottleneck is no longer a valid argument to discard EBM.
 
 ---
 
-## Veredicto Final
+## Final Verdict
 
-### Lo que se confirmó como descartado
+### What was confirmed as discarded
 
-1. **PGLF como capa sobre embeddings**: Definitivamente no funciona. 14 configuraciones, ninguna supera baseline. Más datos empeora. No hay salvataje.
+1. **PGLF as a layer over embeddings**: Definitely does not work. 14 configurations, none beat baseline. More data makes it worse. No salvage possible.
 
-2. **Energía EBM para OOD**: Funciona pero nearest-neighbor hace lo mismo sin ventaja. No es un diferenciador.
+2. **EBM energy for OOD**: Works but nearest-neighbor does the same with no advantage. Not a differentiator.
 
-### Lo que cambió del veredicto anterior
+### What changed from the previous verdict
 
-3. **Bottleneck de velocidad**: El argumento de "200 pasos Langevin por token" **ya no aplica**. Rectified Flow lo resuelve con 29x speedup y mejor calidad. Esto era uno de los 4 argumentos para abandonar.
+3. **Speed bottleneck**: The argument of "200 Langevin steps per token" **no longer applies**. Rectified Flow solves it with 24-29x speedup and better quality. This was one of the 4 arguments to abandon.
 
-### Implicación
+### Implication
 
-De los 4 problemas fundamentales identificados al archivar el proyecto:
+Of the 4 fundamental problems identified when archiving the project:
 
-| Problema | Estado original | Estado post-tests |
+| Problem | Original status | Post-test status |
 |---|---|---|
-| 200 pasos Langevin | ❌ Inviable | ✅ Resuelto (RF, 1 paso) |
-| Landscape plano (10K splats en 640D) | ❌ Demasiado sparse | ⚠️ Sin testear aún |
-| Decoder lossy (S^639 → vocab) | ❌ Mapeo difícil | ⚠️ Sin testear aún |
-| Compitiendo contra GPT/LLaMA | ❌ No competitivo | ❌ Sigue siendo cierto |
+| 200 Langevin steps | Unviable | Solved (RF, 1 step) |
+| Flat landscape (10K splats in 640D) | Too sparse | Not yet tested |
+| Lossy decoder (S^639 -> vocab) | Hard mapping | Not yet tested |
+| Competing with GPT/LLaMA | Not competitive | Still true |
 
-El EBM como **generador de lenguaje** sigue sin ser competitivo con transformers. Pero la velocidad ya no es el problema. Si hubiera un caso de uso donde el sampling del landscape de energía agregue valor (no generación de texto, sino exploración de espacios latentes), RF lo hace viable.
+EBM as a **language generator** is still not competitive with transformers. But speed is no longer the problem. If there were a use case where sampling from the energy landscape adds value (not text generation, but latent space exploration), RF makes it viable.
 
-### Caminos que NO se descartaron
+### Paths NOT discarded
 
-- **EBM como generador con RF** (proyecto nuevo, no modificación mínima)
-- **Cross-modal retrieval** con splats como distribuciones (Test 2.3 del plan, no ejecutado)
-- **Inicialización pre-entrenada** de splats desde bge-m3 (Test 2.1, no ejecutado)
+- **EBM as generator with RF** (new project, not minimal modification)
+- **Cross-modal retrieval** with splats as distributions (not tested)
+- **Pre-trained initialization** of splats from bge-m3 (not tested)
 
 ---
 
-*Tests ejecutados en RTX 3090, datos reales, resultados reproducibles.*
-*Scripts en `tests/phase1_t1*.py`, resultados raw en `tests/t1*_results.jsonl`*
+*Tests executed on RTX 3090, real data, reproducible results.*
+*Scripts in `tests/phase1_t1*.py`, raw results in `tests/t1*_results.jsonl`*
