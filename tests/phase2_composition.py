@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
-PHASE 2 — TEST: Composición de Conceptos via Energía EBM
+PHASE 2 — TEST: Concept Composition via EBM Energy
 
-Hipótesis: Sumar energía de múltiples tópicos simultáneamente produce
-samples en la intersección semántica. Como word2vec arithmetic pero
-con control continuo del landscape de energía.
+Hypothesis: Adding energy from multiple topics simultaneously produces
+samples in the semantic intersection. Like word2vec arithmetic but
+with continuous control of the energy landscape.
 
 Tests:
-  1. Boost A solo → samples cerca de A
-  2. Boost B solo → samples cerca de B
-  3. Boost A+B juntos → samples en el midpoint/intersección
-  4. Boost A con peso 0.7 + B con peso 0.3 → blend asimétrico
-  5. Boost A, suppress B → A puro, alejado de B
-  6. 3 tópicos: Boost A+B+C → intersección triple
+  1. Boost A alone → samples near A
+  2. Boost B alone → samples near B
+  3. Boost A+B together → samples at the midpoint/intersection
+  4. Boost A with weight 0.7 + B with weight 0.3 → asymmetric blend
+  5. Boost A, suppress B → pure A, far from B
+  6. 3 topics: Boost A+B+C → triple intersection
 
-Métrica: similitud coseno promedio de los samples a cada centro de tópico.
-Si composición funciona, A+B debería tener alta similitud a AMBOS centros.
+Metric: average cosine similarity of samples to each topic center.
+If composition works, A+B should have high similarity to BOTH centers.
 """
 
 import time, json, torch, torch.nn as nn, torch.nn.functional as F

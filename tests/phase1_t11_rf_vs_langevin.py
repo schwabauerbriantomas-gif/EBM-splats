@@ -2,16 +2,16 @@
 """
 TEST 1.1: Rectified Flow vs Langevin — Speed Benchmark
 
-Hipótesis: Rectified Flow reduce el sampling de 200 pasos a 5 pasos
-sin perder calidad.
+Hypothesis: Rectified Flow reduces sampling from 200 steps to 5 steps
+without losing quality.
 
-Como no tenemos un EBM entrenado, este test mide:
-1. Velocidad pura: ¿cuánto tarda RF (5 pasos) vs Langevin (200 pasos)?
-2. Calidad de interpolación: ¿RF produce samples que parecen datos reales?
+Since we don't have a trained EBM, this test measures:
+1. Pure speed: how long does RF (5 steps) take vs Langevin (200 steps)?
+2. Interpolation quality: does RF produce samples that look like real data?
 
-Usamos embeddings reales de MiniLM como "datos" y comparamos:
-- Langevin: parte de ruido, sigue score field 200 pasos
-- Rectified Flow: parte de ruido, sigue velocity field 5 pasos
+We use real MiniLM embeddings as the "data distribution" and compare:
+- Langevin: starts from noise, follows score field for 200 steps
+- Rectified Flow: starts from noise, follows velocity field for 5 steps
 """
 
 import time
