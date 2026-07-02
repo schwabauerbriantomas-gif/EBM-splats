@@ -1,0 +1,10 @@
+{"method": "rectified_flow_1_steps", "n_steps": 1, "time_s": 0.006, "mmd": 0.009185}
+{"method": "rectified_flow_2_steps", "n_steps": 2, "time_s": 0.0033, "mmd": 0.009941}
+{"method": "rectified_flow_5_steps", "n_steps": 5, "time_s": 0.0079, "mmd": 0.010186}
+{"method": "rectified_flow_10_steps", "n_steps": 10, "time_s": 0.0146, "mmd": 0.010539}
+{"method": "rectified_flow_20_steps", "n_steps": 20, "time_s": 0.0255, "mmd": 0.011251}
+{"method": "langevin_10_steps", "n_steps": 10, "time_s": 0.0891, "mmd": 0.01333}
+{"method": "langevin_50_steps", "n_steps": 50, "time_s": 0.0584, "mmd": 0.007283}
+{"method": "langevin_100_steps", "n_steps": 100, "time_s": 0.1075, "mmd": 0.009974}
+{"method": "langevin_200_steps", "n_steps": 200, "time_s": 0.2322, "mmd": 0.014809}
+{"method": "random_noise_baseline", "n_steps": 0, "time_s": 0.0095, "mmd": 0.018104}

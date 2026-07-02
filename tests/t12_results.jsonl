@@ -1,0 +1,14 @@
+{"config": "baseline", "data": 50000, "epochs": 1, "lr": 0.0001, "temp": 0.07, "gain": 0.1, "spearman": 0.8415, "delta": -0.0257, "verdict": "HURTS", "train_time_s": 5.7}
+{"config": "data=200K", "data": 200000, "epochs": 1, "lr": 0.0001, "temp": 0.07, "gain": 0.1, "spearman": 0.8343, "delta": -0.0329, "verdict": "HURTS", "train_time_s": 14.0}
+{"config": "data=500K", "data": 500000, "epochs": 1, "lr": 0.0001, "temp": 0.07, "gain": 0.1, "spearman": 0.8326, "delta": -0.0346, "verdict": "HURTS", "train_time_s": 32.2}
+{"config": "epochs=3", "data": 50000, "epochs": 3, "lr": 0.0001, "temp": 0.07, "gain": 0.1, "spearman": 0.8416, "delta": -0.0255, "verdict": "HURTS", "train_time_s": 9.2}
+{"config": "epochs=5", "data": 50000, "epochs": 5, "lr": 0.0001, "temp": 0.07, "gain": 0.1, "spearman": 0.838, "delta": -0.0291, "verdict": "HURTS", "train_time_s": 15.7}
+{"config": "gain=0.5", "data": 50000, "epochs": 1, "lr": 0.0001, "temp": 0.07, "gain": 0.5, "spearman": 0.8514, "delta": -0.0157, "verdict": "HURTS", "train_time_s": 3.2}
+{"config": "gain=1.0", "data": 50000, "epochs": 1, "lr": 0.0001, "temp": 0.07, "gain": 1.0, "spearman": 0.858, "delta": -0.0092, "verdict": "HURTS", "train_time_s": 3.6}
+{"config": "lr=5e-4", "data": 50000, "epochs": 1, "lr": 0.0005, "temp": 0.07, "gain": 0.1, "spearman": 0.8218, "delta": -0.0454, "verdict": "HURTS", "train_time_s": 3.3}
+{"config": "lr=1e-3", "data": 50000, "epochs": 1, "lr": 0.001, "temp": 0.07, "gain": 0.1, "spearman": 0.8111, "delta": -0.056, "verdict": "HURTS", "train_time_s": 3.3}
+{"config": "temp=0.05", "data": 50000, "epochs": 1, "lr": 0.0001, "temp": 0.05, "gain": 0.1, "spearman": 0.8454, "delta": -0.0217, "verdict": "HURTS", "train_time_s": 3.5}
+{"config": "temp=0.1", "data": 50000, "epochs": 1, "lr": 0.0001, "temp": 0.1, "gain": 0.1, "spearman": 0.8266, "delta": -0.0406, "verdict": "HURTS", "train_time_s": 3.3}
+{"config": "combo1", "data": 200000, "epochs": 3, "lr": 0.0001, "temp": 0.07, "gain": 0.5, "spearman": 0.8407, "delta": -0.0265, "verdict": "HURTS", "train_time_s": 40.3}
+{"config": "combo2", "data": 500000, "epochs": 3, "lr": 0.0005, "temp": 0.07, "gain": 0.5, "spearman": 0.8287, "delta": -0.0385, "verdict": "HURTS", "train_time_s": 103.7}
+{"config": "combo3", "data": 200000, "epochs": 5, "lr": 0.0005, "temp": 0.05, "gain": 1.0, "spearman": 0.8371, "delta": -0.0301, "verdict": "HURTS", "train_time_s": 71.9}
