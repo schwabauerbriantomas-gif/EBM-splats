@@ -1,60 +1,69 @@
 # EBM-Splats
 
-> **Status: ACTIVE RESEARCH** — Phase 1 empirical tests complete (July 2026). PGLF embedding approach descartado. EBM generador con Rectified Flow en exploración.
+> **Status: ACTIVE RESEARCH** — Phase 1 empirical tests complete (July 2026). PGLF embedding approach discarded. EBM generator with Rectified Flow under exploration.
 
-Energy-Based Model con Gaussian Splats en hiperesfera 640D. Explora representaciones distribucionales para espacios latentes, sampling por Langevin dynamics y Rectified Flow.
+Energy-Based Model with Gaussian Splats on a 640D hypersphere. Explores distributional representations for latent spaces, sampling via Langevin dynamics and Rectified Flow.
 
-## Fases del proyecto
+## Project Phases
 
-### Phase 1: EBM + PGLF (Abril 2026) — Descartado
+### Phase 1: EBM + PGLF (April 2026) — Discarded
 
-EBM con splats gaussianos como atractores en S^639 + PGLF (proyección sobre MiniLM con loss contrastivo).
+EBM with Gaussian splats as attractors on S^639 + PGLF (projection over MiniLM with contrastive loss).
 
-**Resultado:** PGLF degradó MiniLM en STS-B (-4.7%). La proyección sobre embeddings pre-entrenados siempre destruye la geometría.
+**Result:** PGLF degraded MiniLM on STS-B (-4.7%). Projection over pre-trained embeddings always destroys geometry.
 
-### Phase 1 Empírica: Tests de descarte (Julio 2026)
+### Phase 1 Empirical: Discard Tests (July 2026)
 
-3 tests empíricos para descartar o confirmar alternativas. RTX 3090, datos reales.
+3 empirical tests to discard or confirm alternatives. RTX 3090, real data.
 
-| Test | Hipótesis | Resultado | Veredicto |
+| Test | Hypothesis | Result | Verdict |
 |------|-----------|-----------|-----------|
-| PGLF Grid (14 configs) | ¿Alguna config supera MiniLM? | 0/14 superan baseline (0.8672) | **DESCARTADO** |
-| OOD Detection | ¿Energía EBM detecta OOD? | AUROC=1.0 pero NN=0.999 | **SIN VENTAJA** |
-| RF vs Langevin | ¿RF soluciona bottleneck de velocidad? | 24-29x más rápido, mejor calidad | **CONFIRMADO** |
+| PGLF Grid (14 configs) | Can any config beat MiniLM? | 0/14 beat baseline (0.8672) | **DISCARDED** |
+| OOD Detection | Does EBM energy detect OOD? | AUROC=1.0 but NN=0.999 | **NO ADVANTAGE** |
+| RF vs Langevin | Does RF solve the speed bottleneck? | 24-29x faster, better quality | **CONFIRMED** |
 
-**Hallazgo clave:** El argumento de "200 pasos Langevin por token" ya no aplica. Rectified Flow con 1-2 pasos produce mejores samples que Langevin con 200 pasos, 24x más rápido.
+**Key finding:** The argument that "200 Langevin steps per token" is prohibitive no longer applies. Rectified Flow with 1-2 steps produces better samples than Langevin with 200 steps, 24x faster.
 
-### Phase 2: EBM Generador con RF — En exploración
+### Phase 2: Energy-Guided Generation (July 2026)
 
-Nuevo enfoque: EBM como generador que aprende su propio espacio latente (no como capa sobre modelos pre-entrenados), con sampling por Rectified Flow.
+EBM as a generator that learns its own latent space (not as a layer over pre-trained models), with sampling via Rectified Flow.
 
-## Estructura del repo
+| Test | Hypothesis | Result | Verdict |
+|------|-----------|-----------|-----------|
+| Energy-Guided Generation | Can energy manipulation steer generation? | 100% topic control at gs=1.0-2.0 | **CONFIRMED** |
+| Concept Composition | Can multiple concepts be combined? | 4/4 mechanisms work | **CONFIRMED** |
+
+**Composition results:**
+- Equal blend (A+B): balanced similarity to both topics
+- Weighted (70/30): asymmetric control confirmed
+- Suppression (A−B): sim_B dropped from 0.44 to −0.29
+- Triple (A+B+C): all three topics active (sim > 0.48)
+
+**EBM + RF enables semantic arithmetic on the hypersphere.**
+
+## Repository Structure
 
 ```
-├── config.py              # EBMConfig — configuración V2
-├── energy.py              # EnergyFunction — splats + geom + comp energy
-├── geometry.py            # Operaciones Riemannianas (exp_map, log_map, tangent)
-├── splats.py              # SplatStorage — gaussianas direccionales
-├── score_network.py       # ScoreNetwork — denoising score matching
-├── langevin.py            # Langevin dynamics (underdamped)
-├── decoder.py             # MoE decoder (S^639 → vocab)
-├── context_hierarchy.py   # Contexto jerárquico (local/medium/global)
-├── model.py               # EBMModel — integración completa
-├── train_rectified_flow.py # Rectified Flow sampler (SPEC 3)
-├── pglf/                  # PGLF (archivado — descartado empíricamente)
+├── src/ebm/               # Core EBM modules (geometry, splats, energy, model, etc.)
+├── pglf/                  # PGLF (archived — discarded empirically)
+├── scripts/               # Training and generation scripts
 ├── tests/
-│   ├── phase1_t11_rf_vs_langevin.py    # Test RF vs Langevin
-│   ├── phase1_t12_pglf_grid.py         # Test PGLF grid search
-│   ├── phase1_t13_ood_energy.py        # Test OOD detection
-│   └── t1*_results.jsonl               # Resultados raw
+│   ├── phase1_t11_rf_vs_langevin.py    # RF vs Langevin benchmark
+│   ├── phase1_t12_pglf_grid.py         # PGLF grid search
+│   ├── phase1_t13_ood_energy.py        # OOD detection test
+│   ├── phase2_energy_guided.py         # Energy-guided generation test
+│   ├── phase2_composition.py           # Concept composition test
+│   └── t*_results.jsonl                # Raw results
 ├── docs/
-│   └── PHASE1_RESULTS.md  # Reporte completo Fase 1
-└── benchmark_results/     # Benchmarks previos
+│   ├── PHASE1_RESULTS.md  # Full Phase 1 report
+│   ├── PHASE2_RESULTS.md  # Phase 2 energy-guided generation report
+│   └── ...
+└── benchmark_results/     # Previous benchmarks
 ```
 
-## Resultados detallados
+## Detailed Results
 
-Ver [`docs/PHASE1_RESULTS.md`](docs/PHASE1_RESULTS.md) para el reporte completo de tests empíricos.
+See [`docs/PHASE1_RESULTS.md`](docs/PHASE1_RESULTS.md) and [`docs/PHASE2_RESULTS.md`](docs/PHASE2_RESULTS.md) for full empirical test reports.
 
 ## Tech Stack
 
@@ -62,6 +71,6 @@ Ver [`docs/PHASE1_RESULTS.md`](docs/PHASE1_RESULTS.md) para el reporte completo 
 - sentence-transformers, HuggingFace datasets
 - Rust (M2M integration via HTTP)
 
-## Licencia
+## License
 
 Apache-2.0
