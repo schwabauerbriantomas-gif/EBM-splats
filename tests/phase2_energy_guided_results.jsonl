@@ -1,0 +1,9 @@
+{"condition": "baseline", "guidance_scale": 0.0, "pct_topic_a": 0.006, "pct_topic_b": 0.0}
+{"condition": "boost_a_suppress_b_gs0.5", "guidance_scale": 0.5, "pct_topic_a": 0.628, "pct_topic_b": 0.0}
+{"condition": "boost_b_suppress_a_gs0.5", "guidance_scale": 0.5, "pct_topic_a": 0.0, "pct_topic_b": 0.992}
+{"condition": "boost_a_suppress_b_gs1.0", "guidance_scale": 1.0, "pct_topic_a": 0.996, "pct_topic_b": 0.0}
+{"condition": "boost_b_suppress_a_gs1.0", "guidance_scale": 1.0, "pct_topic_a": 0.0, "pct_topic_b": 1.0}
+{"condition": "boost_a_suppress_b_gs2.0", "guidance_scale": 2.0, "pct_topic_a": 1.0, "pct_topic_b": 0.0}
+{"condition": "boost_b_suppress_a_gs2.0", "guidance_scale": 2.0, "pct_topic_a": 0.0, "pct_topic_b": 1.0}
+{"condition": "boost_a_suppress_b_gs5.0", "guidance_scale": 5.0, "pct_topic_a": 0.044, "pct_topic_b": 0.002}
+{"condition": "boost_b_suppress_a_gs5.0", "guidance_scale": 5.0, "pct_topic_a": 0.082, "pct_topic_b": 0.008}
