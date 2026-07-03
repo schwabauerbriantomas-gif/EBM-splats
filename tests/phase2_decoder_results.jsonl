@@ -1,0 +1,4 @@
+{"condition": "baseline", "sim_to_A": 0.3337, "sim_to_B": 0.3048, "n_stories": 8}
+{"condition": "boost_A", "sim_to_A": 0.4335, "sim_to_B": 0.2515, "n_stories": 8}
+{"condition": "boost_B", "sim_to_A": 0.2438, "sim_to_B": 0.4726, "n_stories": 8}
+{"condition": "boost_AB", "sim_to_A": 0.4761, "sim_to_B": 0.2497, "n_stories": 8}
