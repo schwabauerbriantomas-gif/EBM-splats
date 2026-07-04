@@ -1,109 +1,103 @@
 # Experiment Results
 
-## PGLF Sentence Embedding Experiment
+## Phase 3: EBM-Guided Masked Diffusion (LLaDA-8B) — Autoresearch Sweep
 
-**Date**: April 2026  
-**Script**: `experiments/pglf_quick_test.py`  
-**Hardware**: RTX 3090 (24GB VRAM), CUDA 12.4
+**Date**: July 4, 2026
+**Hardware**: RTX 3090 (24GB VRAM), CUDA 12.4, 8GB RAM
+**Model**: LLaDA-8B-Instruct (16GB VRAM), MDLM sampler (128 steps, block_size=32)
+**Script**: `tests/autoresearch.py`
+**Methodology**: Karpathy autoresearch — hypothesis → 5-min experiment → measure → keep/revert
 
-### Setup
+### Experimental Setup
 
-| Parameter | Value |
-|---|---|
-| Backbone | `sentence-transformers/all-MiniLM-L6-v2` (frozen) |
-| Projection | Linear(384 → 384, no bias) + L2 normalize |
-| Training data | SNLI 50K premise-hypothesis pairs |
-| Loss | InfoNCE (τ=0.05) + alignment/uniformity |
-| Optimizer | AdamW (lr=2e-5) |
-| Batch size | 64 |
-| Epochs | 1 |
-| Training time | 35 seconds |
-| Evaluation | STS-B dev split, Spearman correlation |
+- **Prompt**: "Write a short story about something interesting." (open-ended, no topic hint)
+- **Guidance targets**: 4 topics (space, ocean, horror, cooking)
+- **Metrics**: target_sim (cosine sim to target via MiniLM-L6-v2), coherence (half-text cosine sim), diversity, non_rep (1 - most_common_word_ratio)
+- **Quality threshold**: target_sim > 0.15 AND coherence > 0.3
 
-### Results
+### Full Sweep Results (13 experiments)
+
+| # | Config | sim_mean | good% | Space | Ocean | Horror | Cooking | Verdict |
+|---|--------|----------|-------|-------|-------|--------|---------|---------|
+| e00 | α=5, const, abs_max, mean_emb | 0.1845 | 62% | 0.187 | 0.341 | 0.172 | 0.037 | baseline |
+| e01 | α=5, linear_up, z_score | 0.0916 | 12% | 0.120 | 0.021 | 0.193 | 0.033 | ❌ REVERT |
+| e02 | α=5, const, prob_additive | 0.0964 | 12% | 0.097 | 0.046 | 0.187 | 0.055 | ❌ REVERT |
+| e03 | α=10, cosine, abs_max | 0.2370 | 62% | 0.159 | 0.198 | **0.461** | 0.130 | ✅ KEEP |
+| e04 | α=15, cosine, abs_max | 0.2724 | 33% | 0.222 | 0.344 | 0.369 | 0.132 | ❌ REVERT (degenerate) |
+| e05 | α=10, cosine, min_max | 0.2927 | 100%* | — | 0.226 | 0.411 | 0.190 | ❌ REVERT (3/8 degenerate) |
+| **e06** | **α=10, cosine, abs_max, cosine_all** | **0.2574** | **75%** | 0.179 | 0.339 | **0.440** | 0.072 | **✅ BEST** |
+| e07 | e06 + suppress baseline | 0.2574 | 75% | 0.179 | 0.339 | 0.440 | 0.072 | ❌ REVERT (no effect) |
+| e08 | e06 + temp=0.3 | 0.2224 | 50% | 0.121 | 0.395 | 0.362 | 0.012 | ❌ REVERT |
+| e09 | e06 + steps=64 | 0.1838 | 50% | 0.131 | 0.202 | 0.342 | 0.060 | ❌ REVERT |
+| e10 | e06 + linear_down | 0.2437 | 75%* | 0.287 | 0.311 | 0.288 | 0.090 | ❌ REVERT (degenerate) |
+| e11 | e06, 3 trials | 0.2446 | 58% | 0.158 | 0.268 | 0.405 | 0.148 | ✅ confirms e06 |
+| e12 | e06 + temp=0.9 | 0.1545 | 25% | 0.158 | 0.045 | 0.387 | 0.029 | ❌ REVERT |
+| e13 | e06 + logit_blended | 0.1943 | 62% | 0.158 | 0.287 | 0.277 | 0.055 | ❌ REVERT |
+
+\* good% on valid outputs only; degenerate outputs (non_rep < 0.5) excluded
+
+### Best Configuration
+
+**e06: `logit_additive + cosine_all scoring + cosine alpha schedule + abs_max norm + α=10`**
+
+- sim_mean: **0.2574** (+39% vs baseline 0.1845)
+- good%: **75%** (6/8 outputs meet quality threshold)
+- Strongest topics: **horror (0.44)**, **ocean (0.34)**
+- Weakest topics: cooking (0.07), space (0.18)
+- Zero degenerate outputs
+
+### Key Findings
+
+1. **Cosine alpha schedule is critical.** Energy guidance ramping 0→α_max→0 across denoising steps consistently outperforms constant or linear schedules. The model needs freedom early (to establish structure) and late (to refine coherence), with maximum guidance in the middle.
+
+2. **α=10 is the sweet spot.** α=5 is too weak (sim barely above baseline). α=15 causes degenerate outputs (repetition collapse). The cosine schedule's peak α is ~5 (half of nominal), so effective peak injection is moderate.
+
+3. **Logit-space additive guidance is superior to probability-space.** Adding energy scores directly to logits (pre-softmax) preserves the model's distribution shape better than blending probabilities.
+
+4. **cosine_all scoring captures topic better than mean_embedding.** Computing max cosine similarity between each target token and all vocab tokens gives sharper per-token energy than projecting a mean direction.
+
+5. **Temperature is bimodal.** temp=0.3 makes the model too deterministic (resists guidance). temp=0.9 adds noise that drowns the guidance signal. temp=0.6 (default) is optimal.
+
+6. **Topic-dependent effectiveness.** Horror and ocean have distinctive vocabulary that competes well with the model's generic story template. Space and cooking are "common" concepts deeply embedded in the model's priors — the energy guidance cannot overcome the model's narrative inertia for these topics.
+
+### Qualitative Analysis
+
+All guided outputs begin with "Once upon a time, there was a girl..." — LLaDA-8B has a strong narrative template for open-ended story prompts. The energy guidance modifies **individual tokens** (cave→darkness, crystal→blood, water→ocean) but cannot redirect the **narrative structure**.
+
+This reveals the fundamental limitation: **logit-level energy injection steers vocabulary selection but not narrative planning.** The masked diffusion model's iterative denoising creates a "commitment cascade" — early tokens lock in a story arc that later tokens must follow.
+
+### Statistical Power
+
+With 2 trials per topic (8 guided samples), the 75% good rate has a wide confidence interval. The 3-trial replication (e11) showed 58% (7/12), suggesting the true good rate is ~55-70%.
+
+### Limitations of This Approach
+
+1. **Prompt-locked narratives**: The open prompt "write a story" activates a dominant template. More specific prompts might show different guidance effectiveness.
+
+2. **Token-level vs sentence-level**: The energy function operates per-token. Sentence-level semantic steering would require a different mechanism (e.g., classifier-free guidance at the sequence level).
+
+3. **No training**: These experiments use inference-time guidance only. Fine-tuning the model with energy-aware objectives could improve steering.
+
+---
+
+## Earlier Experiments (Historical Reference)
+
+### PGLF Sentence Embedding Experiment (April 2026)
 
 | Model | STS-B Spearman | Δ |
 |---|---|---|
 | MiniLM-L6-v2 (baseline) | **0.8672** | — |
-| PGLF + MiniLM-L6-v2 | 0.8264 | -4.7% |
+| PGLF + MiniLM-L6-v2 | 0.8264 | **-4.7%** |
 
-### Interpretation
+PGLF projection layer degraded embedding quality. Pre-trained geometry is near-optimal.
 
-The PGLF projection layer **degraded** embedding quality by 4.7%. The degradation is consistent and statistically significant given the STS-B dev set size (1,500 pairs).
+### EBM Language Model Training (March 2026)
 
-**Root cause**: The pre-trained MiniLM embedding space is already near-optimal for semantic similarity. Any learned projection trained on limited data (50K pairs) introduces noise that disrupts the billion-scale pre-training geometry. The projection layer would need to be near-identity with effectively zero additional information — at which point it adds no value.
+Training ran but did not converge. Best val_loss 0.0448 did not translate to coherent generation.
 
----
+### Salvaged Components
 
-## EBM Language Model Training (Inconclusive)
-
-**Date**: March 2026  
-**Scripts**: `scripts/train.py`, `scripts/train_scorematching.py`, `scripts/train_tinystories.py`
-
-### Configuration
-
-| Parameter | Value |
-|---|---|
-| Latent dimension | 640 |
-| Initial splats | 10,000 |
-| Max splats | 100,000 |
-| KNN neighbors | 64 |
-| Noise levels | 0.01, 0.05, 0.1, 0.2, 0.5 |
-| Langevin steps | 200 |
-| Score network | 3 layers, 1280 hidden, GELU + LayerNorm |
-| Optimizer | AdamW (lr=1e-3) |
-| Batch size | 16-32 |
-| Dataset | WikiText-103 (100K subset), TinyStories |
-
-### Outcome
-
-Training ran but did not converge to coherent text generation. Perplexity benchmarks were inconclusive (model produced near-uniform token distributions regardless of context).
-
-**Perplexity**: Not measurable (model output was effectively random)
-
-### Autoresearch Sweep
-
-The autoresearch protocol (`docs/AUTORESEARCH_PROTOCOL.md`) was used to explore hyperparameters:
-
-| Experiment | Val Loss | VRAM (MB) | Status |
-|---|---|---|---|
-| Baseline (3 layers, 1280 hidden) | 0.0451 | 4,200 | Baseline |
-| Deeper (5 layers, 1280 hidden) | 0.0448 | 5,800 | Marginal improvement |
-| Wider (3 layers, 2048 hidden) | 0.0455 | 6,100 | Worse |
-| Higher LR (1e-2) | Diverged | — | Crash |
-| Lower LR (1e-4) | 0.0453 | 4,200 | No improvement |
-| SiLU activation | 0.0449 | 4,200 | Marginal |
-| Weight decay 0.01 | 0.0450 | 4,200 | Neutral |
-
-**Best achieved val_loss**: 0.0448 (5-layer model). This loss level did not translate to coherent generation.
-
----
-
-## Salvaged Components
-
-### Embedding Service (`pglf/embedding_service.py`)
-
-Successfully integrated into [M2M-Rust](https://github.com/brian-correntes/m2m-rust):
-
-- HTTP API on port 8788
-- Wraps `all-MiniLM-L6-v2` with hypersphere projection (384D)
-- Endpoints: `/health`, `/embed`
-- Production use: provides embeddings for M2M's vector search engine
-
-### Training Patterns
-
-- **Score matching pipeline**: sigma encoding → MLP → tangent projection
-- **NaN debugging**: Gaussian kernel + clamping for `UniformityAlignmentLoss`
-- **Autoresearch loop**: 5-minute bounded experiments with git-based state management
-
----
-
-## Conclusions
-
-1. **For unimodal text embeddings**: Point vectors from pre-trained models (MiniLM, E5, BGE) remain SOTA. Adding geometric complexity (splats, projections, flow matching) provides no benefit and often hurts.
-
-2. **For EBM language generation**: The approach is computationally prohibitive (200 sampling steps per token) and faces fundamental geometric challenges on the hypersphere. Consistency models could potentially address the speed issue but were not implemented.
-
-3. **Where splat-based representations might help**: Cross-modal alignment (text-image-audio), out-of-distribution detection, and uncertainty-aware retrieval — settings where representing semantic uncertainty as a distribution (rather than a point) provides measurable advantage.
-
-4. **Validate early**: The 35-second PGLF experiment answered the core question definitively. Weeks of architecture design and implementation were necessary to build the infrastructure, but the go/no-go decision took seconds once the quick test was available.
+- **Embedding service** → integrated into M2M-Rust
+- **Autoresearch protocol** → adapted into this sweep framework
+- **NaN debugging** for contrastive losses
+- **Score matching pipeline** patterns

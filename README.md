@@ -1,8 +1,8 @@
 # EBM-Splats
 
-> **Status: Research complete.** Phase 1-2 empirical tests finished. Energy-guided generation continued in [m2m-energy-fields](https://github.com/schwabauerbriantomas-gif/m2m-energy-fields).
+> **Status: Research complete.** Phase 1-3 empirical tests finished. Energy-guided generation continued in [m2m-energy-fields](https://github.com/schwabauerbriantomas-gif/m2m-energy-fields).
 
-Energy-Based Model with Gaussian Splats on a 640D hypersphere. Explores distributional representations for latent spaces, sampling via Langevin dynamics and Rectified Flow.
+Energy-Based Model with Gaussian Splats on a 640D hypersphere. Explores distributional representations for latent spaces, sampling via Langevin dynamics, Rectified Flow, and energy-guided masked diffusion.
 
 ## Project Phases
 
@@ -33,13 +33,25 @@ EBM as a generator that learns its own latent space (not as a layer over pre-tra
 | Energy-Guided Generation | Can energy manipulation steer generation? | 100% topic control at gs=1.0-2.0 | **CONFIRMED** |
 | Concept Composition | Can multiple concepts be combined? | 4/4 mechanisms work | **CONFIRMED** |
 
-**Composition results:**
-- Equal blend (A+B): balanced similarity to both topics
-- Weighted (70/30): asymmetric control confirmed
-- Suppression (A−B): sim_B dropped from 0.44 to −0.29
-- Triple (A+B+C): all three topics active (sim > 0.48)
+### Phase 3: EBM-Guided Masked Diffusion on LLaDA-8B (July 2026)
 
-**EBM + RF enables semantic arithmetic on the hypersphere.**
+Can energy fields steer a large masked diffusion model (LLaDA-8B) via logit injection at each denoising step? **13-experiment autoresearch sweep** using Karpathy methodology.
+
+| Config | sim_mean | good% | Verdict |
+|--------|----------|-------|---------|
+| Baseline (α=5, constant) | 0.1845 | 62% | reference |
+| **Best (α=10, cosine schedule, cosine_all)** | **0.2574** | **75%** | **✅ +39% sim** |
+| Worst (z_score + linear_up) | 0.0916 | 12% | ❌ |
+
+**Best config:** `logit_additive + cosine_all scoring + cosine alpha schedule + abs_max norm + α=10`
+
+**What works:** Topics with distinctive vocabulary (horror sim=0.44, ocean sim=0.34) are steered effectively. Energy injection modifies token selection while maintaining coherence.
+
+**What doesn't work:** "Common" topics (cooking sim=0.07, space sim=0.18) resist steering — the model's narrative priors dominate. All outputs begin "Once upon a time, there was a girl..." regardless of guidance target.
+
+**Fundamental limitation:** Logit-level energy injection steers **vocabulary selection** but not **narrative planning**. The masked diffusion model's iterative denoising creates a commitment cascade that energy cannot redirect.
+
+See [`docs/RESULTS.md`](docs/RESULTS.md) for the full 13-experiment sweep with per-topic breakdowns.
 
 ## Repository Structure
 
