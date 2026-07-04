@@ -1,6 +1,6 @@
 # EBM-Splats
 
-> **Status: ACTIVE RESEARCH** — Phase 1 empirical tests complete (July 2026). PGLF embedding approach discarded. EBM generator with Rectified Flow under exploration.
+> **Status: Research complete.** Phase 1-2 empirical tests finished. Energy-guided generation continued in [m2m-energy-fields](https://github.com/schwabauerbriantomas-gif/m2m-energy-fields).
 
 Energy-Based Model with Gaussian Splats on a 640D hypersphere. Explores distributional representations for latent spaces, sampling via Langevin dynamics and Rectified Flow.
 
