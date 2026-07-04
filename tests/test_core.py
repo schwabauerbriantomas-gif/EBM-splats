@@ -534,7 +534,7 @@ class TestEBMEvaluator:
         samples = samples / samples.norm(dim=-1, keepdim=True)
         references = samples.clone()
         sim = evaluator.compute_cosine_similarity(samples, references)
-        assert 0.0 <= sim <= 1.0
+        assert 0.0 <= sim <= 1.0 + 1e-5  # allow float32 epsilon
         assert sim > 0.9  # same vectors
 
     def test_diversity(self, evaluator):
