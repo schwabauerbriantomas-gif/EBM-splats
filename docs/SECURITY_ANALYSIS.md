@@ -191,6 +191,8 @@ The key insight: **MDLMs trade the sequential commitment problem of autoregressi
 
 ## 5. Relationship to Existing Literature
 
+- **Diffusion-LM** (Li & Liang, ACL 2022, arXiv:2205.14217): Established logit-level classifier guidance for text diffusion models. Our work applies a similar principle but with pre-computed energy vectors (no gradient computation needed) on a much larger model (LLaDA-8B vs Diffusion-LM's small custom architecture). Diffusion-LM frames this as "controllable generation"; our analysis reframes the same architectural property as an attack surface.
+
 - **Discrete Diffusion Backdoor Attack** (Wang et al., arXiv:2405.16867, May 2024): First backdoor attack on discrete diffusion models, but targets **image** models (VQ-Diffusion, MaskGIT) and requires **training-time** poisoning. Our work targets **text** models at **inference time**.
 
 - **GCG / AutoDAN** (Zou et al., 2023): Adversarial suffix attacks on autoregressive LLMs. These operate via prompt manipulation, not logit injection. The attack surface is fundamentally different.
@@ -199,7 +201,7 @@ The key insight: **MDLMs trade the sequential commitment problem of autoregressi
 
 - **Activation Steering / Representation Engineering** (Zou et al., 2023): Adding vectors to hidden states. Similar in spirit but operates on **activations**, not **logits**, and is studied primarily on autoregressive models.
 
-**To our knowledge, this is the first empirical demonstration of inference-time logit injection attacks on masked diffusion language models.**
+**Note on novelty:** Logit-level guidance for text diffusion was established by Diffusion-LM (2022) as a *controllable generation* technique. Our contribution is the empirical characterization of this property on a modern 8B-scale instruction-tuned MDLM (LLaDA), documenting its effectiveness, limitations, and security framing. We do not claim the base technique as novel.
 
 ---
 

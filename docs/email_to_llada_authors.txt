@@ -1,0 +1,60 @@
+To: nieshen@ruc.edu.cn
+Cc: liuchongxuan@ruc.edu.cn
+Subject: Empirical observation: energy-guided steering on LLaDA-8B (extends Diffusion-LM to 8B scale)
+
+Dear Shen Nie and Chongxuan Liu,
+
+I am writing to share an empirical observation from experiments with
+LLaDA-8B-Instruct. The intent is purely informational.
+
+I applied logit-level guidance at each denoising step of LLaDA-8B to steer
+generation toward semantic targets. This technique was established by
+Diffusion-LM (Li & Liang, ACL 2022) as a controllable generation method.
+My contribution is simply to characterize how it behaves on a modern 8B-scale
+instruction-tuned masked diffusion model — something that, to my knowledge,
+has not been empirically documented yet.
+
+What I observed:
+
+- Pre-computed energy vectors (derived from target text via the model's own
+  embedding matrix) injected into logits at each step produced a 39% increase
+  in semantic similarity to the target topic over baseline, while maintaining
+  output coherence.
+
+- The approach I used differs from Diffusion-LM in that it requires no
+  gradient computation. A single matrix-vector product (embedding matrix x
+  target direction) produces per-token energy scores. This makes the
+  injection computationally cheap: one mv() call per denoising step.
+
+- Effectiveness is topic-dependent. Distinctive vocabulary (horror:
+  target_sim 0.44, ocean: 0.34) is steered effectively. Common vocabulary
+  that competes with strong model priors (cooking: 0.07, space: 0.18)
+  resists steering.
+
+- There is a narrow effective range for the injection strength parameter
+  (alpha 8-12). Below that, the effect is negligible; above it, outputs
+  collapse into degenerate repetition.
+
+- The fundamental limitation: logit-level injection steers vocabulary
+  selection but does not alter narrative planning. All outputs retained the
+  model's default story template regardless of guidance target.
+
+From a security perspective, the observation is that masked diffusion models
+expose N injection points per output (one per denoising step, typically 128)
+vs 1 per token in autoregressive models. This is a structural property of
+the architecture, not a bug. I want to be clear: this requires white-box
+access (model weights and embedding matrix). It is not a server-side
+exploit and does not affect black-box API users.
+
+All experiments are fully documented and reproducible:
+- Code: https://github.com/schwabauerbriantomas-gif/EBM-splats/blob/main/tests/autoresearch.py
+- Raw results (13 experiments): https://github.com/schwabauerbriantomas-gif/EBM-splats/tree/main/tests/autoresearch_results
+- Full analysis: https://github.com/schwabauerbriantomas-gif/EBM-splats/blob/main/docs/SECURITY_ANALYSIS.md
+
+I am sharing this purely as an informational observation. I have no
+expectation of response or collaboration. If you find it useful for your
+ongoing research, you are welcome to reference or build upon it. If you
+believe any part of this is incorrect, I would appreciate the correction.
+
+Best regards,
+Brian Schwabauer
