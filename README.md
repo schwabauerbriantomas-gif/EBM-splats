@@ -51,6 +51,12 @@ Can energy fields steer a large masked diffusion model (LLaDA-8B) via logit inje
 
 **Fundamental limitation:** Logit-level energy injection steers **vocabulary selection** but not **narrative planning**. The masked diffusion model's iterative denoising creates a commitment cascade that energy cannot redirect.
 
+### Security Implications
+
+The Phase 3 experiments inadvertently revealed a **novel attack surface** in masked diffusion language models. Unlike autoregressive models (GPT, Llama) which have 1 logit injection point per token, MDLMs expose **N injection points** (one per denoising step, typically 128). Our experiments show that pre-computed energy vectors can steer generation toward arbitrary semantic targets while maintaining output coherence.
+
+See [`docs/SECURITY_ANALYSIS.md`](docs/SECURITY_ANALYSIS.md) for the full threat model, empirical evidence, and mitigation recommendations.
+
 See [`docs/RESULTS.md`](docs/RESULTS.md) for the full 13-experiment sweep with per-topic breakdowns.
 
 ## Repository Structure
