@@ -19,7 +19,7 @@ EBM with Gaussian splats as attractors on S^639 + PGLF (projection over MiniLM w
 | Test | Hypothesis | Result | Verdict |
 |------|-----------|-----------|-----------|
 | PGLF Grid (14 configs) | Can any config beat MiniLM? | 0/14 beat baseline (0.8672) | **DISCARDED** |
-| OOD Detection | Does EBM energy detect OOD? | AUROC=1.0 but NN=0.999 | **NO ADVANTAGE** |
+| OOD Detection | Does EBM energy detect OOD? | AUROC=1.0 (EBM) vs 0.999 (random baseline) | **NO ADVANTAGE** |
 | RF vs Langevin | Does RF solve the speed bottleneck? | 24-29x faster, better quality | **CONFIRMED** |
 
 **Key finding:** The argument that "200 Langevin steps per token" is prohibitive no longer applies. Rectified Flow with 1-2 steps produces better samples than Langevin with 200 steps, 24x faster.
@@ -76,7 +76,7 @@ See [`docs/RESULTS.md`](docs/RESULTS.md) for the full 13-experiment sweep with p
 │   ├── PHASE1_RESULTS.md  # Full Phase 1 report
 │   ├── PHASE2_RESULTS.md  # Phase 2 energy-guided generation report
 │   └── ...
-└── benchmark_results/     # Previous benchmarks
+└── tests/                 # Empirical results (JSONL)
 ```
 
 ## Detailed Results
