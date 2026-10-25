@@ -118,7 +118,11 @@ class SplatStorage(nn.Module):
                 x_sq = (x * x).sum(dim=-1, keepdim=True)
                 mu_sq = (mu_active * mu_active).sum(dim=-1)
                 d2 = x_sq + mu_sq.unsqueeze(0) - 2.0 * torch.mm(x, mu_active.T)
-                topk_indices = torch.topk(d2, k=k, dim=-1).indices
+                # smallest d2 = NEAREST splats, matching the docstring and the
+                # faiss path (IndexFlatIP: highest inner product = nearest on
+                # unit vectors). largest=True here was a bug: it selected the
+                # FARTHEST splats. Ascending order matches faiss output order.
+                topk_indices = torch.topk(d2, k=k, dim=-1, largest=False).indices
                 idx_tensor = topk_indices.squeeze(-1)
 
             neighbors_mu = self.mu[idx_tensor]

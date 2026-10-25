@@ -2,21 +2,19 @@
 KNN top-k en Triton para `SplatStorage.find_neighbors` (src/ebm/splats.py).
 
 Semántica replicada EXACTAMENTE de la referencia (`SplatStorage.find_neighbors`,
-path torch-stock — el que mide el baseline):
+path torch-stock — el que mide el baseline, CORREGIDA en 2.1.0):
 
     mu_active = store.mu[:store.n_active]
     d2 = (x*x).sum(-1, keepdim=True) + (mu*mu).sum(-1) - 2 * x @ mu.T
-    idx = torch.topk(d2, k=k, dim=-1).indices        # largest=True, sorted=True
+    idx = torch.topk(d2, k=k, dim=-1, largest=False).indices  # NEAREST, asc
     return store.mu[idx], store.alpha[idx], store.kappa[idx]
 
-OJO (verificado empíricamente, probe en RTX 3090 / torch 2.14.1+cu126):
-`torch.topk(d2)` usa largest=True por defecto, es decir la referencia selecciona
-los d2 MÁS GRANDES (= splats MÁS LEJANOS en métrica euclídea), no los más
-cercanos. Además el path faiss (IndexFlatIP) selecciona mayor producto interno
-(= más cercanos cuando mu está normalizado): ambos paths de la referencia
-DISCREPAN. Este kernel replica el path torch-stock (el baseline medido), no el
-path faiss. Si algún día se corrige la referencia, basta invertir el signo del
-empaquetado (ver `_pack_keys`) o pasar `largest=False` por el mismo código.
+HISTORIAL (verificado empíricamente, probe en RTX 3090 / torch 2.14.1+cu126):
+antes de 2.1.0 la referencia usaba `torch.topk(d2)` con largest=True por
+defecto: seleccionaba los d2 MÁS GRANDES (= splats MÁS LEJANOS), mientras el
+path faiss (IndexFlatIP) seleccionaba mayor producto interno (= más cercanos
+con mu normalizado) — ambas rutas de la referencia DISCREPABAN. Corregido a
+nearest en 2.1.0 (referencia y kernel, mismo commit) — ver CHANGELOG.
 
 Métrica: distancia euclídea al cuadrado vía identidad del matmul
 (||x||² + ||mu||² - 2 x·mu), fp32 con `input_precision="ieee"` en tl.dot
@@ -75,9 +73,11 @@ if _TRITON_AVAILABLE:
     def _pack_desc(d2, col_key):
         # Mapa monótono float32 -> uint32 (comparación por bits, soporta
         # negativos): signo 1 -> ~bits, signo 0 -> bits | 0x80000000.
-        u = d2.to(tl.uint32, bitcast=True)
+        # La referencia (corregida en 2.1.0) selecciona los NEAREST: negar d2
+        # y ordenar descendente = d2 ascendente = más cercanos primero.
+        u = (-d2).to(tl.uint32, bitcast=True)
         u = tl.where((u >> 31) == 1, ~u, u | 0x80000000)
-        # Clave int64: d2 en los bits altos (orden desc = d2 desc),
+        # Clave int64: d2 en los bits altos (desc sobre -d2 = d2 asc),
         # (0xFFFFF - idx) en los bajos (mismo d2 -> índice menor primero).
         return (u.to(tl.int64) << 20) | col_key.to(tl.int64)
 
@@ -144,6 +144,10 @@ if _TRITON_AVAILABLE:
             # Misma composición elemento a elemento que la referencia:
             # d2 = (x_sq + mu_sq) - (2.0 * dot)
             d2 = (xsq[:, None] + msq[None, :]) - 2.0 * acc
+            # Padding (columnas sin splat real): d2=+inf => -d2=-inf => clave
+            # mínima => ordena SIEMPRE abajo (con nearest o farthest). Antes el
+            # padding quedaba con d2=x_sq y con nearest subía al top-k.
+            d2 = tl.where(n_mask[None, :], d2, float("inf"))
             col_key = tl.where(n_mask[None, :], 0xFFFFF - n_offs[None, :], 0)
             key_new = _pack_desc(d2, col_key)
 
@@ -266,7 +270,9 @@ def _knn_mm_topk(store, x: torch.Tensor, k: int, block_q: int, block_n: int,
         BLOCK_Q=block_q, BLOCK_N=block_n, BLOCK_D=64, EVEN_D=even_d,
         num_warps=num_warps, num_stages=num_stages,
     )
-    return torch.topk(d2, k=k, dim=-1).indices
+    # NEAREST (d2 menor), consistente con la referencia corregida en 2.1.0
+    # (topk largest=False) y con el path faiss (mayor IP = más cercano).
+    return torch.topk(d2, k=k, dim=-1, largest=False).indices
 
 
 def _can_fused(store, x: torch.Tensor, k: int) -> bool:

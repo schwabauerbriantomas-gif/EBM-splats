@@ -102,10 +102,10 @@ correctness asserted before timing — `benches/bench_headtohead.py`):
 
 | workload | reference | kernel | speedup | correctness |
 |---|---|---|---|---|
-| Langevin sampling (100 steps, B=8) | 656 ms | **46.7 ms** | **14.1x** | graph ≡ eager bit-exact; \|ΔE\| vs reference 0.021 (sampler noise, 0.2%) |
-| score forward | 1.06 ms | 0.25 ms | **4.25x** | maxdiff 8.2e-8 |
-| splat energy | 0.80 ms | 0.23 ms | **3.47x** | maxdiff 9.5e-7 |
-| find_neighbors (warm, memoized) | 0.02 ms | 0.02 ms | 0.82x | bit-exact |
+| Langevin sampling (100 steps, B=8) | 660 ms | **51.2 ms** | **12.9x** | graph ≡ eager bit-exact; \|ΔE\| vs reference 0.0024 (sampler noise, 0.03%) |
+| score forward | 0.96 ms | 0.30 ms | **3.22x** | maxdiff 7.5e-8 |
+| splat energy | 0.82 ms | 0.24 ms | **3.39x** | maxdiff 9.5e-7 |
+| find_neighbors (warm, memoized) | 0.02 ms | 0.02 ms | 0.80x | top-k set bit-exact |
 
 Honest notes:
 
@@ -117,9 +117,16 @@ Honest notes:
   routes automatically and falls back outside its winning regime.
 - The fused KNN variant (distance+top-k in one launch) was built, measured and
   **rejected**: 15–40x slower than the split path (bitonic merge dominates).
-- Reference quirk left untouched (documented, not fixed — it would invalidate
-  published results): `find_neighbors` selects the LARGEST d2 values (farthest
-  splats) on its torch path, and its legacy faiss path disagreed with it.
+- With nearest-neighbour selection the d2 gaps INSIDE the top-k shrink to
+  ~1e-6 (fp32 GEMM noise), so the returned neighbour ORDER depends on the GEMM
+  that computed d2 (reference cuBLAS vs tiled Triton). The top-k SET is stable
+  (cut gap ~3e-4). Tests therefore assert the set exactly and the order
+  within a 1e-5 near-tie band.
+- `find_neighbors` semantic fix (2.1.0): the torch path selected the LARGEST
+  d2 values — the FARTHEST splats — while the docstring said "nearest" and the
+  legacy faiss path (highest inner product) disagreed with it. Both paths now
+  select the k nearest splats, ascending. Results published before 2.1.0
+  (README results table) were measured with the old behaviour.
 
 ## License
 

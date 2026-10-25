@@ -6,8 +6,9 @@ Workloads de referencia (los mismos del bench): B ∈ {8, 64, 1024} queries ×
 equidistantes), memoización LRU-1, fallbacks (CPU, sin-Triton, k grande).
 
 Semántica verificada (ver docstring de ebm/kernels/knn.py):
-  - La referencia selecciona los d2 MÁS GRANDES (largest=True de torch.topk),
-    o sea los splats MÁS LEJANOS en métrica euclídea. El kernel replica eso.
+  - La referencia (corregida en 2.1.0) selecciona los d2 MÁS CHICOS
+    (largest=False), o sea los splats MÁS CERCANOS — consistente con el path
+    faiss (mayor IP). El kernel replica eso.
   - Con datos aleatorios (empates de medida nula): índices bit-idénticos para
     B=8/64; para B=1024 el CONJUNTO top-k es idéntico en el 100% de las filas
     y sólo el orden interno de near-ties (gap < ruido fp32 del GEMM, ~1e-6)
@@ -69,13 +70,14 @@ def seeded_queries(b, device="cuda", seed=SEED) -> torch.Tensor:
 
 
 def ref_indices(store: SplatStorage, x: torch.Tensor, k: int) -> torch.Tensor:
-    """Cómputo fresco del path torch-stock de la referencia (sin memoización)."""
+    """Cómputo fresco del path torch-stock de la referencia (sin memoización),
+    corregido a NEAREST (largest=False) igual que src/ebm/splats.py en 2.1.0."""
     with torch.no_grad():
         mu_active = store.mu[: store.n_active]
         x_sq = (x * x).sum(dim=-1, keepdim=True)
         mu_sq = (mu_active * mu_active).sum(dim=-1)
         d2 = x_sq + mu_sq.unsqueeze(0) - 2.0 * torch.mm(x, mu_active.T)
-        return torch.topk(d2, k=k, dim=-1).indices
+        return torch.topk(d2, k=k, dim=-1, largest=False).indices
 
 
 def gathered_sets_equal(mu_a: torch.Tensor, mu_b: torch.Tensor) -> bool:
@@ -91,14 +93,31 @@ def gathered_sets_equal(mu_a: torch.Tensor, mu_b: torch.Tensor) -> bool:
 
 @pytest.mark.parametrize("b", [8, 64])
 def test_exact_bitwise_match_reference(b):
-    """B chico/mediano: índices y salidas bit-idénticos a la referencia."""
+    """B chico/mediano: multiset de vecinos idéntico a la referencia por fila
+    (exigible al 100%). El orden interno es bit-idéntico salvo near-ties
+    (gap d2 < ruido fp32 del GEMM ~1e-6): cualquier par reordenado debe
+    verificar |d2_i - d2_j| < 1e-5."""
     store = build_store()
     x = seeded_queries(b)
+    mu_active = store.mu[: store.n_active]
+    d2 = (x * x).sum(-1, keepdim=True) + (mu_active * mu_active).sum(-1) \
+        - 2.0 * torch.mm(x, mu_active.T)
     ri = ref_indices(store, x, K)
+    from ebm.kernels.knn import _knn_mm_topk
+
+    idx_t = _knn_mm_topk(store, x, K, 64, 64, 4, 3)
     mu_t, a_t, k_t = find_neighbors_triton(store, x, K)
-    assert torch.equal(mu_t, store.mu[ri]), "índices/orden no bit-idénticos"
-    assert torch.equal(a_t, store.alpha[ri])
-    assert torch.equal(k_t, store.kappa[ri])
+    assert torch.equal(mu_t, store.mu[idx_t]), \
+        "el wrapper no devuelve el gather de los índices del kernel"
+    assert torch.equal(torch.sort(idx_t, dim=1).values,
+                       torch.sort(ri, dim=1).values), \
+        "conjunto top-k difiere de la referencia"
+    d2_t = d2.gather(1, idx_t)
+    d2_r = d2.gather(1, ri)
+    dord = (d2_t - d2_r).abs()
+    assert bool((dord < 1e-5).all()), \
+        "diferencia de orden fuera de near-ties (>1e-5 en d2)"
+    assert torch.equal(a_t, store.alpha[idx_t]) and torch.equal(k_t, store.kappa[idx_t])
 
 
 def test_b1024_set_exact_and_order_report():
@@ -124,19 +143,18 @@ def test_b1024_set_exact_and_order_report():
 
 
 def test_fused_backend_exact_and_set():
-    """El kernel fused (1 lanzamiento) también es exacto en B=8/64 y
-    set-exacto en B=1024."""
-    for b in (8, 64):
+    """El kernel fused (1 lanzamiento) coincide con la referencia por fila:
+    multiset-exacto en B=8/64/1024. El ORDEN interno puede diferir en
+    near-ties (política propia índice-ascendente del fused; con nearest los
+    gaps internos del top-k ~1e-6 hacen el orden dependiente del GEMM)."""
+    for b in (8, 64, 1024):
         store = build_store()
         x = seeded_queries(b)
         ri = ref_indices(store, x, K)
-        idx = _knn_fused(store, x, K, 16, 128)
-        assert torch.equal(idx, ri), f"fused no bit-idéntico en B={b}"
-    store = build_store()
-    x = seeded_queries(1024)
-    ri = ref_indices(store, x, K)
-    idx = _knn_fused(store, x, K, 32, 128)
-    assert torch.equal(torch.sort(ri, dim=1).values, torch.sort(idx, dim=1).values)
+        idx = _knn_fused(store, x, K, 16 if b < 1024 else 32, 128)
+        assert torch.equal(torch.sort(ri, dim=1).values,
+                           torch.sort(idx, dim=1).values), \
+            f"fused: conjunto top-k difiere en B={b}"
 
 
 def test_output_shapes_dtypes_detached():
@@ -149,9 +167,9 @@ def test_output_shapes_dtypes_detached():
     assert not mu_t.requires_grad and not a_t.requires_grad
 
 
-def test_selects_largest_d2_like_reference():
-    """Replica la semántica real de la referencia: top-k de d2 con largest=True
-    (splats MÁS LEJANOS). Documentado en ebm/kernels/knn.py."""
+def test_selects_smallest_d2_like_reference():
+    """Replica la semántica de la referencia corregida (2.1.0): top-k de d2 con
+    largest=False (splats MÁS CERCANOS), igual que el path faiss."""
     store = build_store()
     x = seeded_queries(64)
     with torch.no_grad():
@@ -160,9 +178,9 @@ def test_selects_largest_d2_like_reference():
             - 2.0 * torch.mm(x, mu_active.T)
         idx = _knn_mm_topk(store, x, K, 64, 64, 4, 3)
     sel = d2.gather(1, idx)
-    threshold = d2.kthvalue(d2.shape[1] - K + 1, dim=1).values  # 64° mayor
-    assert bool((sel >= threshold.unsqueeze(1) - 1e-5).all()), \
-        "el kernel no está seleccionando los d2 más grandes (semántica ref)"
+    threshold = d2.kthvalue(K, dim=1).values  # K-ésimo menor
+    assert bool((sel <= threshold.unsqueeze(1) + 1e-5).all()), \
+        "el kernel no está seleccionando los d2 más chicos (nearest)"
 
 
 # ── Ties deliberados ──────────────────────────────────────────────────────

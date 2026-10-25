@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ebm-splats"
-version = "2.0.0"
+version = "2.1.0"
 description = "Energy-Based Model with Gaussian Splats on a 640D hypersphere — archived research project"
 readme = "README.md"
 license = { text = "Apache-2.0" }
