@@ -1,81 +1,126 @@
-import torch
-print('PyTorch:', torch.__version__)
-print('CUDA:', torch.cuda.is_available())
-if torch.cuda.is_available():
-    print('GPU:', torch.cuda.get_device_name(0))
-    print('VRAM:', round(torch.cuda.get_device_properties(0).total_memory / 1e9, 1), 'GB')
+"""Unit tests for the pglf package API.
 
-# Test PGLF imports
-print('\n--- Testing PGLF imports ---')
+Pure-CPU, torch-only tests: no model downloads, no network, no module-level
+side effects (the previous version of this file was a smoke script that
+executed training-size models during pytest collection).
+"""
+
+import pytest
+
+torch = pytest.importorskip("torch")
+
+import pglf
 from pglf import (
-    TextEncoder, OmnimodalEncoder,
-    HypersphereFlowMatching, FlowMatchingLoss,
-    HypersphereContrastiveLoss, ParetoFilter,
+    FlowMatchingLoss,
+    HypersphereContrastiveLoss,
+    HypersphereFlowMatching,
+    OmnimodalEncoder,
+    ParetoFilter,
     PGLFTrainer,
+    TextEncoder,
 )
-print('All PGLF imports OK')
 
-# Test model instantiation
-print('\n--- Testing model creation ---')
-dim = 640
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+DIM = 40  # divisible by TextEncoder's default n_heads=10
+VOCAB = 100
+SEQ = 8
+BATCH = 4
 
-encoder = TextEncoder(dim=dim).to(device)
-n_params = sum(p.numel() for p in encoder.parameters())
-print(f'TextEncoder: {n_params/1e6:.1f}M params')
 
-flow = HypersphereFlowMatching(dim=dim).to(device)
-n_params = sum(p.numel() for p in flow.parameters())
-print(f'FlowMatching: {n_params/1e6:.1f}M params')
+def _small_encoder() -> TextEncoder:
+    torch.manual_seed(0)
+    return TextEncoder(
+        vocab_size=VOCAB,
+        dim=DIM,
+        n_layers=1,
+        n_heads=2,
+        ff_dim=64,
+        max_seq_len=SEQ + 8,
+        dropout=0.0,
+    )
 
-# Test forward pass
-print('\n--- Testing forward pass ---')
-B = 4
-input_ids = torch.randint(0, 50257, (B, 32)).to(device)
-attn_mask = torch.ones(B, 32, dtype=torch.long).to(device)
 
-# Test TextEncoder directly
-with torch.no_grad():
-    emb = encoder(input_ids, attn_mask)
-    print(f'TextEncoder output shape: {emb.shape}')
-    print(f'Norms: {emb.norm(dim=-1).tolist()}')
+def _batch():
+    g = torch.Generator().manual_seed(0)
+    ids = torch.randint(1, VOCAB, (BATCH, SEQ), generator=g)
+    return ids, torch.ones_like(ids)
 
-# Test OmnimodalEncoder
-omni = OmnimodalEncoder(dim=dim).to(device)
-with torch.no_grad():
-    emb, mod = omni.encode_text(input_ids, attn_mask)
-    print(f'Embedding shape: {emb.shape}')
-    print(f'Norms: {emb.norm(dim=-1).tolist()}')
-    print(f'Modalities: {mod.tolist()}')
 
-# Test flow matching loss
-print('\n--- Testing flow matching ---')
-fm_loss = FlowMatchingLoss().to(device)
-condition = emb
-modality = mod
+def test_public_api_exports_all_documented_names():
+    for name in pglf.__all__:
+        assert hasattr(pglf, name), f"pglf.{name} missing"
 
-with torch.no_grad():
-    loss = fm_loss(flow, emb, condition, modality)
-    print(f'FM Loss: {loss.item():.4f}')
 
-# Test flow sampling
-print('\n--- Testing flow sampling ---')
-with torch.no_grad():
-    samples = flow.sample(condition=condition, modality=modality, n_steps=5)
-    print(f'Sampled shape: {samples.shape}')
-    print(f'Sampled norms: {samples.norm(dim=-1).tolist()}')
+def test_text_encoder_output_shape_and_unit_norm():
+    enc = _small_encoder().eval()
+    ids, mask = _batch()
+    with torch.no_grad():
+        emb = enc(ids, mask)
+    assert emb.shape == (BATCH, DIM)
+    assert torch.isfinite(emb).all()
+    norms = emb.norm(dim=-1)
+    assert torch.allclose(norms, torch.ones_like(norms), atol=1e-4)
 
-# Test Pareto filter
-print('\n--- Testing Pareto filter ---')
-pf = ParetoFilter(n_keep=3)
-selected, objectives, fronts = pf.filter(emb)
-print(f'Pareto: {selected.shape[0]}/{emb.shape[0]} selected')
-print(f'Fronts: {[len(f) for f in fronts]}')
 
-# VRAM usage
-if torch.cuda.is_available():
-    alloc = torch.cuda.memory_allocated(0) / 1e9
-    reserved = torch.cuda.memory_reserved(0) / 1e9
-    print(f'\nVRAM: {alloc:.2f} GB allocated, {reserved:.2f} GB reserved')
+def test_omnimodal_encoder_routes_text():
+    torch.manual_seed(0)
+    omni = OmnimodalEncoder(dim=DIM, freeze_pretrained=True)
+    omni.eval()
+    ids, mask = _batch()
+    with torch.no_grad():
+        emb, modality = omni.encode_text(ids, mask)
+    assert emb.shape == (BATCH, DIM)
+    assert modality.shape == (BATCH,)
+    assert (modality == OmnimodalEncoder.MODALITY_TEXT).all()
 
-print('\n=== ALL TESTS PASSED ===')
+
+def test_flow_matching_loss_is_finite_and_backprops():
+    torch.manual_seed(0)
+    flow = HypersphereFlowMatching(dim=DIM, hidden_dim=64, n_layers=2, condition_dim=DIM)
+    loss_fn = FlowMatchingLoss()
+
+    x1 = torch.nn.functional.normalize(torch.randn(BATCH, DIM), dim=-1)
+    condition = torch.randn(BATCH, DIM)
+    modality = torch.zeros(BATCH, dtype=torch.long)
+
+    loss = loss_fn(flow, x1, condition, modality)
+    assert loss.dim() == 0
+    assert torch.isfinite(loss)
+
+    loss.backward()
+    grads = [p.grad for p in flow.parameters() if p.requires_grad]
+    assert grads and any(g is not None and g.abs().sum() > 0 for g in grads), (
+        "no gradient reached the flow-matching parameters"
+    )
+
+
+def test_pareto_filter_returns_requested_count():
+    torch.manual_seed(0)
+    emb = torch.nn.functional.normalize(torch.randn(20, DIM), dim=-1)
+    pf = ParetoFilter(n_keep=5)
+    selected, objectives, fronts = pf.filter(emb)
+    assert selected.shape == (5, DIM)
+    assert objectives.shape[0] == 5
+    assert objectives.shape[1] == pf.n_objectives
+    # Fronts partition the whole population
+    assert sum(len(f) for f in fronts) == 20
+    assert torch.isfinite(selected).all()
+
+
+def test_contrastive_loss_decreases_for_matching_pairs():
+    torch.manual_seed(0)
+    loss_fn = HypersphereContrastiveLoss()
+    anchor = torch.nn.functional.normalize(torch.randn(6, DIM), dim=-1)
+    positive = torch.nn.functional.normalize(anchor + 0.01 * torch.randn(6, DIM), dim=-1)
+    negative = torch.nn.functional.normalize(torch.randn(6, DIM), dim=-1)
+    loss_pos, _ = loss_fn(anchor, positive)
+    loss_neg, _ = loss_fn(anchor, negative)
+    assert torch.isfinite(loss_pos) and torch.isfinite(loss_neg)
+    assert loss_pos < loss_neg
+
+
+def test_trainer_class_is_constructible_signature_only():
+    # PGLFTrainer wires encoders + ebm components together; building the real
+    # object pulls heavy defaults, so only assert the API surface here.
+    assert callable(PGLFTrainer)
+    for phase in ("init_ebm_components", "phase1_contrastive_training"):
+        assert callable(getattr(PGLFTrainer, phase, None)), f"{phase} missing"

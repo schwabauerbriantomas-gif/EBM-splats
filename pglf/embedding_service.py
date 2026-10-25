@@ -8,14 +8,16 @@ Provides:
 """
 
 import argparse
-import json
 import logging
-import sys
+from typing import TYPE_CHECKING, List, Optional, Union
+
+if TYPE_CHECKING:  # flask is an optional [service] extra at runtime
+    import flask
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List, Optional, Union
 
 logger = logging.getLogger("pglf.embedding_service")
 
@@ -116,7 +118,15 @@ class EmbeddingService:
     def _load_pglf_encoder(self) -> None:
         """Load the custom PGLF TextEncoder from pglf.encoders."""
         from pglf.encoders import TextEncoder
-        import tiktoken
+
+        try:  # lazy: tiktoken is only needed on this code path, keep it out of
+            import tiktoken  # module level so `import pglf.embedding_service`
+        except ImportError as exc:  # works without it (ebm-embed-service entry)
+            raise ImportError(
+                "The 'pglf' encoder backend requires tiktoken "
+                "(pip install tiktoken), or use model_name='miniml' with the "
+                "[service] extra instead"
+            ) from exc
 
         self._backbone_type = "pglf_textencoder"
         self._pglf_model = TextEncoder(dim=640).to(self.device)
@@ -193,7 +203,7 @@ class EmbeddingService:
 # ---------------------------------------------------------------------------
 
 def create_app(service: Optional[EmbeddingService] = None, **kwargs) -> "flask.Flask":
-    from flask import Flask, request, jsonify
+    from flask import Flask, jsonify, request
 
     if service is None:
         service = EmbeddingService(**kwargs)
