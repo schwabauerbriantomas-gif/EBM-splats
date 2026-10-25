@@ -1,7 +1,9 @@
 import torch
+
 from .config import EBMConfig
-from .splats import SplatStorage
 from .geometry import geodesic_distance
+from .splats import SplatStorage
+
 
 class HistoryBuffer:
     def __init__(self, capacity: int = 10000, latent_dim: int = 640):

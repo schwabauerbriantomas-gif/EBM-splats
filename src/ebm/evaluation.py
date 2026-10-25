@@ -10,10 +10,10 @@ Metrics:
   - Gradient health (magnitude, NaN check)
 """
 
+from collections import deque
+
 import torch
 import torch.nn.functional as F
-from typing import Dict, Optional
-from collections import deque
 
 
 class EBMEvaluator:
@@ -23,7 +23,7 @@ class EBMEvaluator:
         self.device = device
         self.energy_history: deque = deque(maxlen=1000)
 
-    def compute_energy_stats(self, energy: torch.Tensor) -> Dict[str, float]:
+    def compute_energy_stats(self, energy: torch.Tensor) -> dict[str, float]:
         """Basic energy statistics with NaN/Inf detection."""
         e = energy.detach().cpu().float()
         return {
@@ -83,7 +83,7 @@ class EBMEvaluator:
         cos_sims = (embeddings[:, :-1] * embeddings[:, 1:]).sum(dim=-1)
         return cos_sims.mean().item()
 
-    def check_gradient_health(self, score: torch.Tensor) -> Dict[str, float]:
+    def check_gradient_health(self, score: torch.Tensor) -> dict[str, float]:
         """Check gradient/score tensor health."""
         s = score.detach().cpu().float()
         norms = s.norm(dim=-1)
@@ -96,8 +96,8 @@ class EBMEvaluator:
         }
 
     def full_report(self, energy: torch.Tensor, score: torch.Tensor,
-                    samples: Optional[torch.Tensor] = None,
-                    references: Optional[torch.Tensor] = None) -> Dict:
+                    samples: torch.Tensor | None = None,
+                    references: torch.Tensor | None = None) -> dict:
         """Generate a full evaluation report."""
         report = {}
         report['energy'] = self.compute_energy_stats(energy)
@@ -111,7 +111,7 @@ class EBMEvaluator:
 
         return report
 
-    def is_healthy(self, report: Dict) -> bool:
+    def is_healthy(self, report: dict) -> bool:
         """Quick health check: no NaN/Inf, non-zero energies, real scores."""
         e = report.get('energy', {})
         g = report.get('gradient', {})

@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 
+
 def exp_map(p: torch.Tensor, v: torch.Tensor, eps: float = 1e-8) -> torch.Tensor:
     """Projects tangent vector 'v' back to the hypersphere at base point 'p'."""
     norm_v = torch.norm(v, dim=-1, keepdim=True).clamp(min=eps)

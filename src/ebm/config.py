@@ -8,8 +8,7 @@ Fixes applied:
   - Proper default values from V2 Especificacion Tecnica
 """
 
-from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from dataclasses import dataclass
 
 
 @dataclass
@@ -33,7 +32,7 @@ class EBMConfig:
     knn_k: int = 64
     
     # ── Splat Initialization (Phase 1 improvements) ──
-    vocab_embedding_path: Optional[str] = None
+    vocab_embedding_path: str | None = None
     init_from_vocab_embeddings: bool = False
     init_alpha: float = 1.0
     init_kappa: float = 10.0
@@ -58,7 +57,7 @@ class EBMConfig:
     splat_convergence_threshold: float = 0.95
     
     # ── Noise Schedule (V2 §3.3 Adaptive Noise) ──
-    noise_levels: Tuple[float, ...] = (0.01, 0.05, 0.1, 0.2, 0.5)
+    noise_levels: tuple[float, ...] = (0.01, 0.05, 0.1, 0.2, 0.5)
     sigma_base: float = 0.1
     sigma_scale: float = 1.0
     sigma_rho_ref: float = 1.0

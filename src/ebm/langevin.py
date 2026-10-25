@@ -9,11 +9,11 @@ Improvements:
   - Proper Riemannian integration
 """
 
-import torch
 import numpy as np
+import torch
 
 from .config import EBMConfig
-from .geometry import exp_map, project_to_tangent, normalize_sphere
+from .geometry import exp_map, project_to_tangent
 
 
 class LangevinState:

@@ -10,15 +10,15 @@ Integrates:
 """
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .config import EBMConfig
-from .splats import SplatStorage
-from .energy import EnergyFunction
-from .langevin import sample_langevin
-from .decoder import EBMDecoder
-from .geometry import normalize_sphere
 from .context import HierarchicalContext
+from .decoder import EBMDecoder
+from .energy import EnergyFunction
+from .geometry import normalize_sphere
+from .langevin import sample_langevin
+from .splats import SplatStorage
 
 
 class CompositionalEngine(nn.Module):

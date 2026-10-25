@@ -1,6 +1,8 @@
 import torch
-import torch.nn as nn
+from torch import nn
+
 from .config import EBMConfig
+
 
 class MoELayer(nn.Module):
     def __init__(self, config: EBMConfig, in_features: int):

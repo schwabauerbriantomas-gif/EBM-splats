@@ -9,14 +9,14 @@ Fixes:
   - Proper initialization with kappa from config
 """
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+
 import numpy as np
-from typing import Optional
+import torch
+import torch.nn.functional as F
+from torch import nn
 
 from .config import EBMConfig
-from .geometry import normalize_sphere, geodesic_distance
+from .geometry import geodesic_distance, normalize_sphere
 
 # faiss is optional. Resolving the import once (instead of on every
 # find_neighbors call) avoids paying the failed-import machinery per call

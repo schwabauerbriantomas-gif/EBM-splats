@@ -17,11 +17,9 @@ Riemannian gradient for score:
 """
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn
 
 from .config import EBMConfig
-from .geometry import project_to_tangent
 
 
 class EnergyFunction(nn.Module):

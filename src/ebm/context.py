@@ -10,9 +10,9 @@ Integration:
   E_trans(x_t) = -Σ_{l∈{local,medium,global}} λ_l · (x_t · c_l)
 """
 
+
 import torch
-import torch.nn as nn
-from typing import Dict
+from torch import nn
 
 from .config import EBMConfig
 from .geometry import normalize_sphere
@@ -99,7 +99,7 @@ class HierarchicalContext(nn.Module):
 
         self._step.add_(1)
 
-    def get_context(self) -> Dict[str, torch.Tensor]:
+    def get_context(self) -> dict[str, torch.Tensor]:
         """Return dict of context vectors."""
         return {
             'local': self.c_local,

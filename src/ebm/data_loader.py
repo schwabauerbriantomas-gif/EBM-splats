@@ -9,8 +9,8 @@ Supported datasets:
   - WikiText-103: cached via HuggingFace (fallback)
 """
 
-import os
 import logging
+import os
 import warnings
 
 # Suppress GPT-2 tokenizer warnings about sequence length
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def _get_torch_utils():
     """Lazy import torch utilities."""
     import torch
-    from torch.utils.data import Dataset, DataLoader
+    from torch.utils.data import DataLoader, Dataset
     return torch, Dataset, DataLoader
 
 def _get_transformers():

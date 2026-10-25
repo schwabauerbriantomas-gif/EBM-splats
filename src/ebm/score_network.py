@@ -13,9 +13,9 @@ Architecture:
 """
 
 import math
+
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn
 
 from .geometry import project_to_tangent
 
