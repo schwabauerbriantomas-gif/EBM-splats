@@ -92,10 +92,12 @@ The energy scores are computed once (pre-computed from target text), making the 
 
 | Configuration | target_sim mean | Quality rate | Notes |
 |--------------|----------------|-------------|-------|
-| Baseline (no injection) | 0.1845 | 62% | Random similarity to topics |
+| Baseline config (α=5, constant injection) | 0.1845 | 62% | Weak-injection reference, **not** attack-free (e00; truly injection-free runs have no target_sim) |
 | **Best attack (α=10, cosine, cosine_all)** | **0.2574** | **75%** | **+39% semantic steering** |
-| Overpowered (α=15) | 0.2724 | 33% | Causes degenerate repetition |
-| Degenerate schedule (linear_down) | 0.2437 | 0% valid | "stars stars stars..." collapse |
+| Overpowered (α=15) | 0.2941 | 25% | Higher sim but quality collapses (repetition, low coherence) |
+| Degenerate schedule (linear_down) | 0.2437 | 0% on 2 valid outputs | 6/8 outputs collapse ("stars stars stars...") |
+
+Quality rate = share of all 8 guided outputs per config meeting target_sim > 0.15 AND coherence > 0.3; where outputs collapsed (non_rep < 0.5), the valid-only rate is noted. Source: `tests/autoresearch_results/e00`–`e13*.jsonl`.
 
 **Per-topic attack effectiveness (best config):**
 

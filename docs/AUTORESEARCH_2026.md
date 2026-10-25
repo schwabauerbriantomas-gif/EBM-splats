@@ -1,6 +1,6 @@
 # Autoresearch: EBM-Splats Project Viability
 
-**Date:** July 2, 2026
+**Date:** July 2, 2026 *(historical snapshot of the July review; file references updated to the current repo layout)*
 **Methodology:** Autoresearch (systematic search on arxiv + Semantic Scholar, 8 sub-topics)
 **Central question:** Is there a viable path, backed by current evidence, for the EBM project with Gaussian splats on a 640D hypersphere?
 
@@ -37,11 +37,11 @@ RTX 3070 (8GB) / RTX 3090 (24GB)
 ### Identified problems (verified in code)
 | Problem | Status in code | Impact |
 |---|---|---|
-| 200 Langevin steps/token | Implemented in `langevin.py`, alternatives in `train_rectified_flow.py` and `train_ebm_optimized.py` | Inference ~40x slower than equivalent transformer |
+| 200 Langevin steps/token | Implemented in `langevin.py`, alternatives in `train_rectified_flow.py` and `train_optimized.py` | Inference ~40x slower than equivalent transformer |
 | Sparse splats in 640D | `SplatStorage` with 10K-100K splats in S^639 | Curse of dimensionality makes KNN find distant neighbors |
 | Lossy decoder | `decoder.py` with MoE 4-8 experts | Semantic information lost when mapping S^639 -> vocab |
-| PGLF -4.7% STS-B | Not found in repo (module `pglf/` doesn't exist on filesystem) | Projection to MiniLM loses quality |
-| Vulkan simulated | `vulkan_engine.py` targets AMD RX 6650XT GPU | GPU acceleration non-functional |
+| PGLF -4.7% STS-B | Implemented in `pglf/` (added after this review; discarded in the Phase 1 empirical tests) | Projection to MiniLM loses quality |
+| Vulkan simulated | `src/ebm/vulkan.py` (simulated; targets AMD RX 6650XT GPU) | GPU acceleration non-functional |
 
 ---
 
@@ -211,7 +211,7 @@ The direction the field took:
 
 - **`geometry.py`:** Correct Riemannian operations (exp_map, log_map, parallel transport). Reusable.
 - **`train_rectified_flow.py`:** Correct geodesic rectified flow implementation. Reusable.
-- **`train_ebm_optimized.py`:** Training techniques (EMA, beta-annealing, input perturbation). Reusable.
+- **`train_optimized.py`:** Training techniques (EMA, beta-annealing, input perturbation). Reusable.
 - **`score_network.py`:** Score network architecture. Standard and correct.
 
 ---

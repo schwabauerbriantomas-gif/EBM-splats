@@ -23,18 +23,18 @@
 | e01 | α=5, linear_up, z_score | 0.0916 | 12% | 0.120 | 0.021 | 0.193 | 0.033 | ❌ REVERT |
 | e02 | α=5, const, prob_additive | 0.0964 | 12% | 0.097 | 0.046 | 0.187 | 0.055 | ❌ REVERT |
 | e03 | α=10, cosine, abs_max | 0.2370 | 62% | 0.159 | 0.198 | **0.461** | 0.130 | ✅ KEEP |
-| e04 | α=15, cosine, abs_max | 0.2724 | 33% | 0.222 | 0.344 | 0.369 | 0.132 | ❌ REVERT (degenerate) |
-| e05 | α=10, cosine, min_max | 0.2927 | 100%* | — | 0.226 | 0.411 | 0.190 | ❌ REVERT (3/8 degenerate) |
+| e04 | α=15, cosine, abs_max | 0.2941 | 25% | 0.222 | 0.344 | 0.427 | 0.182 | ❌ REVERT (degenerate) |
+| e05 | α=10, cosine, min_max | 0.2631 (0.2828 valid) | 62% (83% valid) | 0.204 | 0.226 | 0.411 | 0.212 | ❌ REVERT (2/8 degenerate) |
 | **e06** | **α=10, cosine, abs_max, cosine_all** | **0.2574** | **75%** | 0.179 | 0.339 | **0.440** | 0.072 | **✅ BEST** |
 | e07 | e06 + suppress baseline | 0.2574 | 75% | 0.179 | 0.339 | 0.440 | 0.072 | ❌ REVERT (no effect) |
 | e08 | e06 + temp=0.3 | 0.2224 | 50% | 0.121 | 0.395 | 0.362 | 0.012 | ❌ REVERT |
 | e09 | e06 + steps=64 | 0.1838 | 50% | 0.131 | 0.202 | 0.342 | 0.060 | ❌ REVERT |
-| e10 | e06 + linear_down | 0.2437 | 75%* | 0.287 | 0.311 | 0.288 | 0.090 | ❌ REVERT (degenerate) |
+| e10 | e06 + linear_down | 0.2437 (0.0895 valid) | 75% (0% on 2 valid) | 0.287 | 0.311 | 0.288 | 0.090 | ❌ REVERT (6/8 outputs collapse) |
 | e11 | e06, 3 trials | 0.2446 | 58% | 0.158 | 0.268 | 0.405 | 0.148 | ✅ confirms e06 |
 | e12 | e06 + temp=0.9 | 0.1545 | 25% | 0.158 | 0.045 | 0.387 | 0.029 | ❌ REVERT |
 | e13 | e06 + logit_blended | 0.1943 | 62% | 0.158 | 0.287 | 0.277 | 0.055 | ❌ REVERT |
 
-\* good% on valid outputs only; degenerate outputs (non_rep < 0.5) excluded
+sim_mean and good% are computed over ALL 8 guided outputs per config (good = target_sim > 0.15 AND coherence > 0.3). Values in parentheses: valid outputs only (non_rep ≥ 0.5; degenerate/collapsed outputs excluded). Source: `tests/autoresearch_results/e00`–`e13*.jsonl`.
 
 ### Best Configuration
 

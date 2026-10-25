@@ -10,7 +10,7 @@ To set up a new experiment run:
 2. **Read the in-scope files**:
    - `autoresearch_train.py` — the ONLY file you modify. Model, optimizer, training loop.
    - `config.py` — EBM config (read-only reference).
-   - `score_network.py`, `geometry.py`, `dataset_loader.py` — supporting modules (read-only).
+   - `score_network.py`, `geometry.py`, `data_loader.py` — supporting modules (read-only).
 3. **Verify data exists**: TinyStories at D:/datasets/ebm/tinystories_*.txt
 4. **Initialize results.tsv**: header row only.
 
@@ -22,7 +22,7 @@ Each experiment runs on single GPU (RTX 3090, 24GB VRAM). Training runs for **5 
 
 **What you CAN modify**: `autoresearch_train.py` — everything is fair game: score network architecture, hidden dims, number of layers, noise levels, learning rate, optimizer, batch size, loss function, augmentation, etc.
 
-**What you CANNOT modify**: `config.py`, `geometry.py`, `dataset_loader.py`, `score_network.py`, `energy.py`, `splats.py`, `soc.py`, `langevin.py`.
+**What you CANNOT modify**: `config.py`, `geometry.py`, `data_loader.py`, `score_network.py`, `energy.py`, `splats.py`, `soc.py`, `langevin.py`.
 
 **Goal**: get the lowest `val_loss` (DSM loss on validation TinyStories). Lower is better.
 

@@ -18,7 +18,7 @@ All operations happen on S^639, the unit sphere in R^640:
 
 ### 2. Splat Storage (`splats.py`)
 
-The SplatStore holds up to 100K Gaussian splats, each defined by:
+The SplatStorage class (`splats.py`) holds up to 100K Gaussian splats, each defined by:
 - **μ** (mu) — center on the hypersphere (learnable)
 - **α** (alpha) — sharpness/intensity (learnable, positive)
 - **κ** (kappa) — concentration parameter (learnable, positive)
