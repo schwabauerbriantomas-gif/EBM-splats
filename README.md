@@ -66,9 +66,13 @@ See [`docs/RESULTS.md`](docs/RESULTS.md) for the full 13-experiment sweep with p
 
 ```
 ├── src/ebm/               # Core EBM modules (geometry, splats, energy, model, etc.)
+│   └── kernels/           # Optional Triton/CUDA-graph GPU kernels (see below)
 ├── pglf/                  # PGLF (archived — discarded empirically)
+├── benches/               # GPU benchmarks; bench_headtohead.py = official numbers
 ├── scripts/               # Training and generation scripts
 ├── tests/
+│   ├── kernels/                         # GPU kernel correctness tests (skip w/o CUDA)
+│   ├── archive/                         # Phase-3 & decoder experiments (archived)
 │   ├── phase1_t11_rf_vs_langevin.py    # RF vs Langevin benchmark
 │   ├── phase1_t12_pglf_grid.py         # PGLF grid search
 │   ├── phase1_t13_ood_energy.py        # OOD detection test
