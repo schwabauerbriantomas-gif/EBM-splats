@@ -162,6 +162,15 @@ class SinusoidalTimeEmbedding(nn.Module):
         super().__init__()
         self.dim = dim
         self.max_period = max_period
+        # Precompute the frequency vector once: it depends only on (dim,
+        # max_period). Values identical to the previous per-call
+        # exp(-log(max_period) * arange(half)/half) computation.
+        half_dim = dim // 2
+        self.register_buffer(
+            'freqs',
+            torch.exp(-math.log(max_period)
+                      * torch.arange(half_dim, dtype=torch.float32) / half_dim)
+        )
     
     def forward(self, t: torch.Tensor) -> torch.Tensor:
         """
@@ -170,10 +179,8 @@ class SinusoidalTimeEmbedding(nn.Module):
         Returns:
             [B, dim] sinusoidal embeddings
         """
-        half_dim = self.dim // 2
-        freqs = torch.exp(
-            -math.log(self.max_period) * torch.arange(half_dim, device=t.device, dtype=torch.float32) / half_dim
-        )
+        freqs = self.freqs.to(device=t.device)  # dtype kept float32: same
+        # promotion semantics as the original per-call float32 computation
         args = t * freqs.unsqueeze(0)  # [B, half_dim]
         embedding = torch.cat([args.cos(), args.sin()], dim=-1)
         
