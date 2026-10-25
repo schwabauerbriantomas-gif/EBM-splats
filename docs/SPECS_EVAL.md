@@ -3,7 +3,7 @@
 **Generated:** 2026-03-20  
 **Target:** [EBM-splats](https://github.com/schwabauerbriantomas-gif/EBM-splats)  
 **Repo commit:** Latest (cloned 2026-03-20)  
-**Local workspace:** `C:\Users\user\.openclaw\workspace\projects\ebm\`  
+**Local workspace:** `<local workspace>`  
 **Documents analyzed:** 21 PDFs from `D:\a evaluar y considerar\`
 
 ---
