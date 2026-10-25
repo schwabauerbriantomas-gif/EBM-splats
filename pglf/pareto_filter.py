@@ -34,7 +34,7 @@ def fast_non_dominated_sort(objectives: np.ndarray) -> List[List[int]]:
     n = len(objectives)
 
     # dom[i, j] = i dominates j, computed in row blocks to bound memory.
-    dominated_set: List[List[int]] = [[] for _ in range(n)]
+    dominated_set = [[] for _ in range(n)]
     domination_count = np.zeros(n, dtype=int)
     block = max(1, min(n, 2 ** 22 // max(1, n * max(1, objectives.shape[1]))))
     for start in range(0, n, block):

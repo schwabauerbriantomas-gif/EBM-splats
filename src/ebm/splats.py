@@ -103,7 +103,7 @@ class SplatStorage(nn.Module):
 
                 indexer = faiss.IndexFlatIP(self.latent_dim)
                 indexer.add(db_vectors)
-                distances, indices = indexer.search(query_vectors, k)
+                _distances, indices = indexer.search(query_vectors, k)
                 idx_tensor = torch.from_numpy(indices).to(self.mu.device).long()
             else:
                 # Pure-torch fallback. Pairwise squared distances via the

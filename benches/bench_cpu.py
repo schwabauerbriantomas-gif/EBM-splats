@@ -42,8 +42,8 @@ def seeded_inputs():
     np.random.seed(SEED)
 
     from ebm.config import EBMConfig
-    from ebm.splats import SplatStorage
     from ebm.energy import EnergyFunction
+    from ebm.splats import SplatStorage
 
     # dim 640 (lib default). n_splats=2000: representativo pero razonable en
     # CPU (el default 10000 haría el baseline del KNN muy lento; el perfil
@@ -63,18 +63,18 @@ def seeded_inputs():
     try:
         from ebm.score_network import ScoreNetwork
         score_net = ScoreNetwork(dim=640)
-    except Exception:
+    except ImportError:
         pass  # module optional
 
     try:
-        from pglf.flow_matching import HypersphereFlowMatching, FlowMatchingLoss
+        from pglf.flow_matching import FlowMatchingLoss, HypersphereFlowMatching
         fm = HypersphereFlowMatching(dim=640, hidden_dim=1280, n_layers=6)
         fm_loss_fn = FlowMatchingLoss()
         fm_cond = torch.randn(32, 640)
         fm_modality = torch.randint(0, 3, (32,))
         fm_x1 = torch.randn(32, 640)
         fm_x1 = fm_x1 / fm_x1.norm(dim=-1, keepdim=True)
-    except Exception:
+    except ImportError:
         fm = fm_loss_fn = fm_cond = fm_modality = fm_x1 = None
 
     return {
@@ -179,7 +179,7 @@ def main():
         import cProfile
         import pstats
         name = args.profile
-        fn = dict((n, f) for n, f, _ in wls)[name]
+        fn = {n: f for n, f, _ in wls}[name]
         pr = cProfile.Profile()
         pr.enable()
         fn()
