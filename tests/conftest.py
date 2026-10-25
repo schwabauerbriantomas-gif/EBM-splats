@@ -1,5 +1,6 @@
 import sys
 import os
 
-# Add project root to sys.path so test files can import project modules
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the project root (parent of tests/) to sys.path so test files can
+# import project modules and scripts/ helpers directly.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

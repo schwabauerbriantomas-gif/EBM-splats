@@ -5,6 +5,13 @@ Provides:
   - Python API via EmbeddingService class
   - HTTP server (Flask) on port 8788
   - CLI: python -m pglf.embedding_service --port 8788 --model miniml
+
+NOTE (research archive — read before using): no trained projection checkpoints
+ship with this repository. The 'miniml' backend loads the pre-trained
+all-MiniLM-L6-v2 backbone and applies a randomly initialised hypersphere
+projection; the 'pglf' backend is an untrained TextEncoder. Embeddings are
+not semantically calibrated — the PGLF projection over pre-trained embeddings
+was empirically discarded in Phase 1 (see README "Project Phases").
 """
 
 import argparse
@@ -146,7 +153,14 @@ class EmbeddingService:
     @torch.no_grad()
     def _encode_st(self, texts: List[str]) -> np.ndarray:
         features = self._st_model.tokenize(texts)
-        features = {k: v.to(self.device) for k, v in features.items()}
+        # sentence-transformers >= 6 may include non-tensor entries (e.g. a
+        # 'modality' string) in the tokenized features; only tensors can move
+        # to the device and only tensors are consumed by the forward pass.
+        features = {
+            k: v.to(self.device)
+            for k, v in features.items()
+            if isinstance(v, torch.Tensor)
+        }
         embeddings = self._st_model(features)["sentence_embedding"]
         projected = self._projection(embeddings)
         return projected.cpu().numpy()
