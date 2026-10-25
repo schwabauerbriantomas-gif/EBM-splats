@@ -19,13 +19,11 @@ The GitHub repo contains **27 files** (Python + shaders). The local workspace co
 | `score_network.py` | **Local only** | Direct parametric score model replacing broken autograd approach |
 | `train_ebm_optimized.py` | **Local only** | 4-phase training (DSM → Rectified Flow → Reflow → Benchmark) with EMA, β-annealing |
 | `energy_cuda.py` | **Local only** | CUDA-native energy function replacing Vulkan dependency |
-| `train_cuda.py` | **Local only** | CUDA training variant |
 | `train_scorematching.py` | **Local only** | Score matching training |
 | `train_rectified_flow.py` | **Local only** | Rectified flow training |
 | `train_tinystories.py` | **Local only** | Training on TinyStories dataset |
 | `train_tinystories_fast.py` | **Local only** | Fast TinyStories training |
 | `train_tinystories_streaming.py` | **Local only** | Streaming TinyStories training |
-| `generate_samples.py` | **Local only** | Sample generation |
 | `dataset_loader.py` | **Local only** | Alternative dataset loader |
 
 **Key finding:** The local workspace has significant advancements (ScoreNetwork, CUDA energy, rectified flow, optimized training) that are NOT pushed to the GitHub repo. The repo is **outdated** relative to the workspace.

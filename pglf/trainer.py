@@ -142,18 +142,16 @@ class PGLFTrainer:
         """Initialize EBM-splats components for Langevin exploration."""
         try:
             from ebm.config import EBMConfig
+            from ebm.splats import SplatStorage
+            from ebm.energy import EnergyFunction
             config = EBMConfig()
-            self.splat_store = SplatStorage(
-                n_splats=config.max_splats,
-                dim=config.embedding_dim,
-                device=self.device,
-            )
-            self.energy_fn = EnergyFunction(config).to(self.device)
-            self.langevin_sampler = LangevinSampler(
-                n_steps=self.langevin_steps,
-                dt=self.langevin_dt,
-            )
-            print(f"[PGLF] EBM components loaded: {config.max_splats} splats, dim={config.embedding_dim}")
+            self.splat_store = SplatStorage(config)
+            self.energy_fn = EnergyFunction(config, self.splat_store).to(self.device)
+            # NOTE: a "LangevinSampler" class does not exist; the real API is
+            # sample_langevin(x_init, energy_fn, config) in ebm.langevin.
+            # No training phase samples from it today, so it stays None.
+            self.langevin_sampler = None
+            print(f"[PGLF] EBM components loaded: {config.max_splats} splats, dim={config.latent_dim}")
         except Exception as e:
             print(f"[PGLF] EBM components not available: {e}")
             print("[PGLF] Training without Langevin energy guidance")
