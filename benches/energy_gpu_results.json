@@ -1,0 +1,149 @@
+{
+  "env": {
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "torch": "2.14.1+cu126",
+    "cuda": "12.6",
+    "python": "3.11.15",
+    "seed": 42,
+    "latent_dim": 640,
+    "n_splats_init": 2000,
+    "max_splats": 4000,
+    "knn_k": 64,
+    "note": "PRELIMINARY: shared GPU, noisy; ratios > absolutes",
+    "triton": "3.8.0"
+  },
+  "batches": {
+    "8": {
+      "splat_energy_ref": {
+        "median_ms": 0.8053799992921995,
+        "min_ms": 0.716803999239346,
+        "max_ms": 0.9950840030796826,
+        "reps": 20
+      },
+      "splat_energy_kernel": {
+        "median_ms": 0.2809940015140455,
+        "min_ms": 0.24948799909907393,
+        "max_ms": 0.4615780017047655,
+        "reps": 20
+      },
+      "score_ref": {
+        "median_ms": 1.2430859987944132,
+        "min_ms": 1.1395499968784861,
+        "max_ms": 1.543035003123805,
+        "reps": 20
+      },
+      "score_kernel": {
+        "median_ms": 0.28319699958956335,
+        "min_ms": 0.2697750023799017,
+        "max_ms": 0.4396520016598515,
+        "reps": 20
+      },
+      "energy_score_fused": {
+        "median_ms": 0.3146519993606489,
+        "min_ms": 0.2697750023799017,
+        "max_ms": 0.4233610015944578,
+        "reps": 20
+      },
+      "forward_ref": {
+        "median_ms": 4.472238999369438,
+        "min_ms": 3.8636319986835588,
+        "max_ms": 5.19631800125353,
+        "reps": 20
+      },
+      "forward_kernel": {
+        "median_ms": 2.42797400096606,
+        "min_ms": 2.2168059986142907,
+        "max_ms": 4.075517001183471,
+        "reps": 20
+      }
+    },
+    "64": {
+      "splat_energy_ref": {
+        "median_ms": 0.8168045005731983,
+        "min_ms": 0.6799180009693373,
+        "max_ms": 1.043649001076119,
+        "reps": 20
+      },
+      "splat_energy_kernel": {
+        "median_ms": 0.22843299848318566,
+        "min_ms": 0.1894470005936455,
+        "max_ms": 0.42581999878166243,
+        "reps": 20
+      },
+      "score_ref": {
+        "median_ms": 1.3368354993872344,
+        "min_ms": 0.9182379981211852,
+        "max_ms": 1.7768469988368452,
+        "reps": 20
+      },
+      "score_kernel": {
+        "median_ms": 0.24497950107615907,
+        "min_ms": 0.21321700114640407,
+        "max_ms": 0.6327880000753794,
+        "reps": 20
+      },
+      "energy_score_fused": {
+        "median_ms": 0.2510760004952317,
+        "min_ms": 0.23207000049296767,
+        "max_ms": 0.6893450008647051,
+        "reps": 20
+      },
+      "forward_ref": {
+        "median_ms": 3.796827997575747,
+        "min_ms": 3.278486998169683,
+        "max_ms": 4.608816998370457,
+        "reps": 20
+      },
+      "forward_kernel": {
+        "median_ms": 3.682329997900524,
+        "min_ms": 3.433815003518248,
+        "max_ms": 4.091705999599071,
+        "reps": 20
+      }
+    },
+    "1024": {
+      "splat_energy_ref": {
+        "median_ms": 0.877255499290186,
+        "min_ms": 0.7535869990533683,
+        "max_ms": 0.978485000814544,
+        "reps": 20
+      },
+      "splat_energy_kernel": {
+        "median_ms": 0.4449285006558057,
+        "min_ms": 0.4021519998786971,
+        "max_ms": 0.6478489995060954,
+        "reps": 20
+      },
+      "score_ref": {
+        "median_ms": 3.2447785015392583,
+        "min_ms": 3.072544001042843,
+        "max_ms": 3.501336002955213,
+        "reps": 20
+      },
+      "score_kernel": {
+        "median_ms": 0.736936999601312,
+        "min_ms": 0.6284840019361582,
+        "max_ms": 1.4967229981266428,
+        "reps": 20
+      },
+      "energy_score_fused": {
+        "median_ms": 0.7165480001276592,
+        "min_ms": 0.643442999717081,
+        "max_ms": 0.9672140004113317,
+        "reps": 20
+      },
+      "forward_ref": {
+        "median_ms": 4.0384264993917895,
+        "min_ms": 3.515680000418797,
+        "max_ms": 7.493963999877451,
+        "reps": 20
+      },
+      "forward_kernel": {
+        "median_ms": 3.530742000293685,
+        "min_ms": 3.176335998432478,
+        "max_ms": 4.191705997072859,
+        "reps": 20
+      }
+    }
+  }
+}

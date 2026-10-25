@@ -44,8 +44,11 @@ service = [
     "flask>=3.0",
     "tiktoken>=0.5",
 ]
+triton = [
+    "triton>=3.0; platform_system == 'Linux'",
+]
 all = [
-    "ebm-splats[dev,nlp,gpu,service]",
+    "ebm-splats[dev,nlp,gpu,service,triton]",
 ]
 
 [project.scripts]

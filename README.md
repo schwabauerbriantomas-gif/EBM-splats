@@ -91,6 +91,36 @@ See [`docs/PHASE1_RESULTS.md`](docs/PHASE1_RESULTS.md) and [`docs/PHASE2_RESULTS
 - sentence-transformers, HuggingFace datasets
 - Rust (M2M integration via HTTP)
 
+## Experimental GPU kernels
+
+Optional Triton/CUDA-graph kernels for the hot paths, with automatic fallback
+to the reference implementation (no CUDA, no Triton, or outside the winning
+regime). Install with `pip install -e ".[triton]"` (Linux + CUDA GPU).
+
+Official head-to-head (RTX 3090, 4000 splats × dim 640, B=64, seed 42,
+correctness asserted before timing — `benches/bench_headtohead.py`):
+
+| workload | reference | kernel | speedup | correctness |
+|---|---|---|---|---|
+| Langevin sampling (100 steps, B=8) | 656 ms | **46.7 ms** | **14.1x** | graph ≡ eager bit-exact; \|ΔE\| vs reference 0.021 (sampler noise, 0.2%) |
+| score forward | 1.06 ms | 0.25 ms | **4.25x** | maxdiff 8.2e-8 |
+| splat energy | 0.80 ms | 0.23 ms | **3.47x** | maxdiff 9.5e-7 |
+| find_neighbors (warm, memoized) | 0.02 ms | 0.02 ms | 0.82x | bit-exact |
+
+Honest notes:
+
+- The Langevin win is **launch-overhead elimination** (CUDA graph capture of the
+  whole 100-step loop, ~176 kernels/step in eager mode), not math speedups.
+  Capture costs ~0.7–1.2 s once per (shape, splats) configuration and is cached.
+- The KNN kernel only wins on cold lookups at small batch; warm lookups are
+  dominated by the LRU-1 memoization of the reference (0.02 ms) — the wrapper
+  routes automatically and falls back outside its winning regime.
+- The fused KNN variant (distance+top-k in one launch) was built, measured and
+  **rejected**: 15–40x slower than the split path (bitonic merge dominates).
+- Reference quirk left untouched (documented, not fixed — it would invalidate
+  published results): `find_neighbors` selects the LARGEST d2 values (farthest
+  splats) on its torch path, and its legacy faiss path disagreed with it.
+
 ## License
 
 Apache-2.0
