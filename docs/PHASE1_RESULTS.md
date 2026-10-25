@@ -14,7 +14,7 @@
 |------|-----------|-----------|-----------|
 | T1.2 PGLF Grid | Can any config beat MiniLM? | 0/14 configs beat baseline (0.8672) | **DISCARDED** |
 | T1.3 OOD Detection | Does EBM energy detect OOD? | AUROC=1.0 but NN=0.999 | **NO ADVANTAGE** |
-| T1.1 RF vs Langevin | Does RF solve the speed bottleneck? | 24-29x faster, better quality | **CONFIRMED** |
+| T1.1 RF vs Langevin | Does RF solve the speed bottleneck? | 29.4x faster (RF 5 vs Langevin 200 steps), better quality | **CONFIRMED** |
 
 ---
 
@@ -107,7 +107,7 @@
 
 ### Analysis
 
-- **RF (5 steps) vs Langevin (200 steps): 24-29x faster** (0.008s vs 0.232s)
+- **RF (5 steps) vs Langevin (200 steps): 29.4x faster** (0.0079s vs 0.2322s; RF 1 step: 38.7x). Source: `tests/t11_rf_results.jsonl`
 - **RF (5 steps) produces BETTER samples**: MMD=0.0102 vs Langevin MMD=0.0148
 - RF even with 1 single step (MMD=0.0092) beats Langevin with 200 steps (0.0148)
 - Velocity network training: 3.2s for 500 steps
@@ -129,7 +129,7 @@
 
 ### What changed from the previous verdict
 
-3. **Speed bottleneck**: The argument of "200 Langevin steps per token" **no longer applies**. Rectified Flow solves it with 24-29x speedup and better quality. This was one of the 4 arguments to abandon.
+3. **Speed bottleneck**: The argument of "200 Langevin steps per token" **no longer applies**. Rectified Flow solves it with a 29.4x speedup (RF 5 steps vs Langevin 200; 38.7x with 1 step — `tests/t11_rf_results.jsonl`) and better quality. This was one of the 4 arguments to abandon.
 
 ### Implication
 

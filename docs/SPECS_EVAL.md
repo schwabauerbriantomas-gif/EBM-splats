@@ -1,5 +1,7 @@
 # SPECS_EVAL_EBM.md — Document Evaluation for EBM-splats
 
+> **Historical snapshot (2026-03-20).** Written before the repo was reorganized and archived: paths are Windows-local and files listed as "Local only" have since been integrated into the repository (see `scripts/` and `src/ebm/`), some under different names (e.g. `train_ebm_optimized.py` → `scripts/train_optimized.py`, `dataset_loader.py` → `src/ebm/data_loader.py`). Content preserved as-is for the record — do not use for current file layout.
+
 **Generated:** 2026-03-20  
 **Target:** [EBM-splats](https://github.com/schwabauerbriantomas-gif/EBM-splats)  
 **Repo commit:** Latest (cloned 2026-03-20)  

@@ -37,7 +37,7 @@ using the PGLF methodology built on top of EBM-splats.
 
 ### Shared Core (from EBM-splats)
 - geometry.py: Riemannian ops (exp_map, log_map, tangent projection)
-- splats.py: SplatStore (KNN attractors, cross-modal concepts)
+- splats.py: SplatStorage (KNN attractors, cross-modal concepts)
 - score_network.py: Score field predictor
 - langevin.py: Underdamped sampler on S^639
 
@@ -45,7 +45,7 @@ using the PGLF methodology built on top of EBM-splats.
 - pareto_filter.py: Multi-objective ranking + non-dominated sorting
 - flow_matching.py: OT-CFM with conditional vector field
 - contrastive_head.py: Cross-modal alignment loss (InfoNCE on hypersphere)
-- pglf_trainer.py: Orchestrates the 3-phase training loop
+- pglf/trainer.py: Orchestrates the 3-phase training loop
 
 ## Integration with M2M-Rust
 - Export trained Flow Matching model to ONNX
@@ -66,6 +66,6 @@ using the PGLF methodology built on top of EBM-splats.
 - Whisper base (frozen): ~75M params, ~1.5GB VRAM
 - ScoreNetwork (12L 4096H): ~50M params, ~3GB VRAM
 - Flow Matching (6L 640D): ~20M params, ~1GB VRAM
-- SplatStore (100K splats): ~250K params, ~0.1GB VRAM
+- SplatStorage (100K splats): ~250K params, ~0.1GB VRAM
 - Training overhead (gradients, optimizer, batches): ~10GB
 - Total: ~19GB → fits in 24GB with AMP

@@ -1,5 +1,8 @@
 # EBM-Splats
 
+[![CI](https://github.com/schwabauerbriantomas-gif/EBM-splats/actions/workflows/ci.yml/badge.svg)](https://github.com/schwabauerbriantomas-gif/EBM-splats/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/ebm-splats)](https://pypi.org/project/ebm-splats/)
+
 > **Status: Research complete.** Phase 1-3 empirical tests finished. Energy-guided generation continued in [m2m-energy-fields](https://github.com/schwabauerbriantomas-gif/m2m-energy-fields).
 
 Energy-Based Model with Gaussian Splats on a 640D hypersphere. Explores distributional representations for latent spaces, sampling via Langevin dynamics, Rectified Flow, and energy-guided masked diffusion.
@@ -20,9 +23,9 @@ EBM with Gaussian splats as attractors on S^639 + PGLF (projection over MiniLM w
 |------|-----------|-----------|-----------|
 | PGLF Grid (14 configs) | Can any config beat MiniLM? | 0/14 beat baseline (0.8672) | **DISCARDED** |
 | OOD Detection | Does EBM energy detect OOD? | AUROC=1.0 (EBM) vs 0.999 (random baseline) | **NO ADVANTAGE** |
-| RF vs Langevin | Does RF solve the speed bottleneck? | 24-29x faster, better quality | **CONFIRMED** |
+| RF vs Langevin | Does RF solve the speed bottleneck? | 29.4x faster (RF 5 vs Langevin 200 steps), better quality | **CONFIRMED** |
 
-**Key finding:** The argument that "200 Langevin steps per token" is prohibitive no longer applies. Rectified Flow with 1-2 steps produces better samples than Langevin with 200 steps, 24x faster.
+**Key finding:** The argument that "200 Langevin steps per token" is prohibitive no longer applies. Rectified Flow with 1-2 steps produces better samples than Langevin with 200 steps, 29.4-38.7x faster (`tests/t11_rf_results.jsonl`: RF 5 steps 0.0079s and RF 1 step 0.006s vs Langevin 200 steps 0.2322s).
 
 ### Phase 2: Energy-Guided Generation (July 2026)
 
@@ -72,11 +75,10 @@ See [`docs/RESULTS.md`](docs/RESULTS.md) for the full 13-experiment sweep with p
 │   ├── phase2_energy_guided.py         # Energy-guided generation test
 │   ├── phase2_composition.py           # Concept composition test
 │   └── t*_results.jsonl                # Raw results
-├── docs/
-│   ├── PHASE1_RESULTS.md  # Full Phase 1 report
-│   ├── PHASE2_RESULTS.md  # Phase 2 energy-guided generation report
-│   └── ...
-└── tests/                 # Empirical results (JSONL)
+└── docs/
+    ├── PHASE1_RESULTS.md  # Full Phase 1 report
+    ├── PHASE2_RESULTS.md  # Phase 2 energy-guided generation report
+    └── ...
 ```
 
 ## Detailed Results
