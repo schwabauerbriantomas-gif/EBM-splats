@@ -1,8 +1,14 @@
-import torch
-from torch.utils.data import Dataset, DataLoader
-from datasets import load_dataset
-from transformers import AutoTokenizer
 import logging
+
+import torch
+from torch.utils.data import DataLoader, Dataset
+
+try:  # optional nlp extras (ebm-splats[nlp]); only needed by get_dataloader()
+    from datasets import load_dataset
+    from transformers import AutoTokenizer
+except ImportError:  # keep TextDataset importable without the nlp extra
+    load_dataset = None
+    AutoTokenizer = None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,7 +37,13 @@ def get_dataloader(tokenizer_name: str = "gpt2", dataset_name: str = "wikitext",
     Downloads, tokenizes, and maps text blocks to PyTorch DataLoader structs.
     """
     logger.info(f"Loading '{dataset_name}' dataset ({split})...")
-    
+
+    if load_dataset is None or AutoTokenizer is None:
+        raise ImportError(
+            "ebm.data.get_dataloader() requires the optional nlp extras: "
+            "pip install 'ebm-splats[nlp]' (datasets, transformers)"
+        )
+
     try:
         raw_datasets = load_dataset(dataset_name, config_name)
         data_split = raw_datasets[split]

@@ -1,6 +1,0 @@
-=== EBM BENCHMARK REPORT ===
-Total Epochs: 15
-Final Loss: -4.1339
-Final Energy: -4.1338
-Final Active Splats: 1898
-Average Throughput: 6270 tokens/sec
