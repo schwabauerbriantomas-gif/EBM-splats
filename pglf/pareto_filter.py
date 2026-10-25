@@ -23,22 +23,32 @@ def fast_non_dominated_sort(objectives: np.ndarray) -> List[List[int]]:
         objectives: [N, M] array of M objectives for N solutions
     Returns:
         List of fronts (each front is a list of indices)
+
+    The pairwise domination relation is computed with vectorized broadcasting
+    (identical boolean semantics to the previous per-pair `dominates` calls:
+    all(a <= b) and any(a < b)). Front construction keeps the exact iteration
+    order of the original loops, so the returned fronts (membership AND
+    ordering) are identical.
     """
+    objectives = np.asarray(objectives)
     n = len(objectives)
-    domination_count = np.zeros(n, dtype=int)
+
+    # dom[i, j] = i dominates j, computed in row blocks to bound memory.
     dominated_set = [[] for _ in range(n)]
-    fronts = [[]]
-    
-    for i in range(n):
-        for j in range(i + 1, n):
-            if dominates(objectives[i], objectives[j]):
-                dominated_set[i].append(j)
-                domination_count[j] += 1
-            elif dominates(objectives[j], objectives[i]):
-                dominated_set[j].append(i)
-                domination_count[i] += 1
-    
+    domination_count = np.zeros(n, dtype=int)
+    block = max(1, min(n, 2 ** 22 // max(1, n * max(1, objectives.shape[1]))))
+    for start in range(0, n, block):
+        stop = min(start + block, n)
+        a = objectives[start:stop]  # [b, M]
+        le = (a[:, None, :] <= objectives[None, :, :]).all(axis=2)  # [b, n]
+        lt = (a[:, None, :] < objectives[None, :, :]).any(axis=2)   # [b, n]
+        dom = le & lt
+        domination_count += dom.sum(axis=0)
+        for offset in range(stop - start):
+            dominated_set[start + offset] = np.flatnonzero(dom[offset]).tolist()
+
     # First front: solutions with domination_count == 0
+    fronts = [[]]
     for i in range(n):
         if domination_count[i] == 0:
             fronts[0].append(i)
