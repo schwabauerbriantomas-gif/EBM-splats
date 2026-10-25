@@ -68,7 +68,7 @@ class PGLFTrainer:
         self,
         dim: int = 640,
         device: str = "cuda",
-        output_dir: str = "/mnt/c/Users/user/Desktop/EBM-splats/pglf_checkpoints",
+        output_dir: str = "./pglf_checkpoints",
         # Phase 1: Langevin
         langevin_steps: int = 200,
         langevin_dt: float = 0.001,
@@ -432,7 +432,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
-    parser.add_argument("--output", type=str, default="/mnt/c/Users/user/Desktop/EBM-splats/pglf_checkpoints")
+    parser.add_argument("--output", type=str, default="./pglf_checkpoints")
     parser.add_argument("--dataset", type=str, default="tinystories", help="Dataset: tinystories, wikitext")
     args = parser.parse_args()
     
@@ -459,9 +459,9 @@ def main():
     if args.dataset == "tinystories":
         # Try local TinyStories files
         data_paths = [
-            "/mnt/d/datasets/ebm/tinystories_train.txt",
-            "/mnt/d/datasets/ebm/TinyStoriesV2-GPT4-train.txt",
-            "/mnt/c/Users/user/Desktop/datasets/TinyStories-train.txt",
+            "data/tinystories_train.txt",
+            "data/TinyStoriesV2-GPT4-train.txt",
+            "data/TinyStories-train.txt",
         ]
         texts = []
         for p in data_paths:
