@@ -132,6 +132,30 @@ Honest notes:
   select the k nearest splats, ascending. Results published before 2.1.0
   (README results table) were measured with the old behaviour.
 
+## One-class scoring benchmark
+
+How does splat-energy scoring rank against classical label-free alternatives
+(GMM, kNN-density, Mahalanobis, centroid, IsolationForest) on real data?
+20 Newsgroups, 20 one-class tasks, MiniLM embeddings, fit on positives only
+— full methodology and reproducible script in
+[`benches/ONECLASS_DUEL_RESULTS.md`](benches/ONECLASS_DUEL_RESULTS.md):
+
+| method | AUROC (20 tasks) | p50 ms/doc | model size/task |
+|---|---|---|---|
+| **ebm-splats** | **0.9585 ± 0.018** | 0.45 | 386 KB |
+| knn-density | 0.9584 ± 0.020 | 1.75 | 802 KB (grows with corpus) |
+| mahalanobis (LW) | 0.9523 ± 0.020 | 5.26 | 578 KB |
+| gmm (diag) | 0.9439 ± 0.023 | 0.38 | 192 KB |
+| centroid | 0.9324 ± 0.034 | <0.01 | 2 KB |
+| iforest | 0.8828 ± 0.051 | 18.71 | 200 KB |
+
+Tie with kNN on quality, won on operation (3.9x faster, constant memory),
+clear win over GMM/Mahalanobis/IsolationForest — plus generation, composition
+and incremental growth that none of the classical methods offer. The doc also
+covers a calibration trap we hit while fitting splats zero-training:
+alpha=ln(cluster_size) inverts the score (AUROC 0.06); constant alpha=5 fixes
+it (0.96).
+
 ## License
 
 Apache-2.0
