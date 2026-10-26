@@ -108,6 +108,7 @@
 ### Analysis
 
 - **RF (5 steps) vs Langevin (200 steps): 29.4x faster** (0.0079s vs 0.2322s; RF 1 step: 38.7x). Source: `tests/t11_rf_results.jsonl`
+- **Run-to-run variance**: the script is not seeded; a 2026-10-26 rerun (same RTX 3090) measured 15.4x with the same qualitative verdict (RF(5) MMD 0.0110 vs Langevin(200) 0.0117). Expect roughly 15-30x depending on run and hardware.
 - **RF (5 steps) produces BETTER samples**: MMD=0.0102 vs Langevin MMD=0.0148
 - RF even with 1 single step (MMD=0.0092) beats Langevin with 200 steps (0.0148)
 - Velocity network training: 3.2s for 500 steps

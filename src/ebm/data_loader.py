@@ -30,8 +30,10 @@ def _get_transformers():
     from transformers import AutoTokenizer
     return AutoTokenizer
 
-# Default paths
-DATASETS_DIR = "D:/datasets/ebm"
+# Default paths. Set EBM_DATASETS_DIR to point at a directory containing
+# tinystories_train.txt / tinystories_val.txt (the D:/ default is the
+# original author's local machine, not a portable location).
+DATASETS_DIR = os.environ.get("EBM_DATASETS_DIR", "D:/datasets/ebm")
 TINYSTORIES_TRAIN = os.path.join(DATASETS_DIR, "tinystories_train.txt")
 TINYSTORIES_VAL = os.path.join(DATASETS_DIR, "tinystories_val.txt")
 
@@ -133,7 +135,7 @@ def get_wikitext_dataloader(
     AutoTokenizer = _get_transformers()
     torch, _, DataLoader = _get_torch_utils()
 
-    raw = load_dataset("wikitext", "wikitext-103-raw-v1")
+    raw = load_dataset("Salesforce/wikitext", "wikitext-103-raw-v1")
     data = raw[split]
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
     if tokenizer.pad_token is None:

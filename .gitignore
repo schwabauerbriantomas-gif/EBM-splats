@@ -35,3 +35,6 @@ pglf_checkpoints/
 .env
 venv/
 .venv/
+
+# Auto-downloaded benchmark data (tests/phase2_*)
+tests/.tinystories_cache/

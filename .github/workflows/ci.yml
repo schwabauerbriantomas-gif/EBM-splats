@@ -26,3 +26,27 @@ jobs:
 
       - name: Run tests
         run: pytest tests/test_core.py -v --tb=short
+
+  reproducibility:
+    # End-to-end check of the Phase 1 T1.1 benchmark: clone -> public data
+    # (wikitext-2 + MiniLM from the HF Hub) -> train from scratch -> verdict.
+    # Must keep working on a fresh machine with no local assets.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install CPU torch first (smaller wheel)
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install package + benchmark deps
+        run: pip install -e ".[dev,nlp]"
+
+      - name: Run RF vs Langevin benchmark
+        run: |
+          python tests/phase1_t11_rf_vs_langevin.py 2>&1 | tee bench.log
+          grep -q "Rectified Flow WINS" bench.log

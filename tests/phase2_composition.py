@@ -24,7 +24,8 @@ from sklearn.cluster import KMeans
 
 device = "cuda"
 torch.cuda.set_per_process_memory_fraction(0.85)
-RESULTS = "/root/EBM-splats/tests/phase2_composition_results.jsonl"
+import os
+RESULTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "phase2_composition_results.jsonl")
 
 def normalize_sphere(x):
     return F.normalize(x, dim=-1)
@@ -39,7 +40,21 @@ from sentence_transformers import SentenceTransformer
 st_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device=device)
 emb_dim = st_model.get_embedding_dimension()
 
-data_path = "/mnt/d/datasets/ebm/tinystories_train.txt"
+# Load TinyStories: EBM_TINYSTORIES_PATH env var overrides; otherwise
+# auto-download the public validation split from HuggingFace (~19 MB)
+import os
+data_path = os.environ.get("EBM_TINYSTORIES_PATH")
+if data_path is None:
+    _cache = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".tinystories_cache")
+    os.makedirs(_cache, exist_ok=True)
+    data_path = os.path.join(_cache, "tinystories.txt")
+    if not os.path.exists(data_path):
+        print("EBM_TINYSTORIES_PATH not set; downloading TinyStories (validation) from HF...", flush=True)
+        from datasets import load_dataset as _load_ds
+        _ds = _load_ds("roneneldan/TinyStories", split="validation")
+        with open(data_path, "w", encoding="utf-8") as _f:
+            for _r in _ds:
+                _f.write(_r["text"].replace("\n", " ").strip() + "\n")
 print("Loading TinyStories...", flush=True)
 with open(data_path, "r", encoding="utf-8", errors="ignore") as f:
     all_texts = [line.strip() for line in f.readlines() if len(line.strip()) > 80]

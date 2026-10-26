@@ -1,5 +1,34 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed — reproducibility on machines other than the original one
+
+- `tests/phase1_t11_rf_vs_langevin.py` no longer hardcodes `/root/EBM-splats`
+  for `sys.path` and its results file; both are now derived from the script
+  location. Previously the benchmark crashed with `ImportError` (geometry
+  module) and `PermissionError` (results path) for any user other than the
+  original machine.
+- Hugging Face Hub dataset names updated to their current namespaced forms
+  (`wikitext` → `Salesforce/wikitext`, `glue` → `nyu-mll/glue`,
+  `snli` → `stanfordnlp/snli`) in the Phase 1 tests, `pglf/trainer.py`,
+  `src/ebm/data_loader.py` and `experiments/pglf_quick_test.py`. Bare names
+  are rejected by current `huggingface_hub`
+  ("Repository id must be 'namespace/name'").
+- Phase 2 tests (`phase2_energy_guided.py`, `phase2_composition.py`) no longer
+  require a local `D:/datasets/ebm/tinystories_train.txt`: they download the
+  public TinyStories validation split from the Hub automatically (cached in
+  `tests/.tinystories_cache/`, ~19 MB) or accept `EBM_TINYSTORIES_PATH`.
+  `src/ebm/data_loader.py` dataset roots are now overridable via
+  `EBM_DATASETS_DIR` (the old `D:/` default remains only as the last
+  fallback).
+- CI now runs the Phase 1 T1.1 benchmark end-to-end on every push/PR
+  (fresh install, CPU-only torch, public data) and asserts the RF verdict, so
+  the reproducibility guarantee above is enforced, not just documented.
+- `docs/PHASE1_RESULTS.md`: documented run-to-run variance for the T1.1
+  speedup (committed run: 29.4x; 2026-10-26 rerun on the same RTX 3090:
+  15.4x, same qualitative verdict; expect ~15-30x).
+
 ## [v2.1.0] - 2026-10-25
 
 ### Fixed

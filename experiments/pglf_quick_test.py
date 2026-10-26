@@ -39,7 +39,7 @@ print("=" * 70)
 from datasets import load_dataset
 
 print("[Data] Downloading STS-B validation split...")
-stsb = load_dataset("glue", "stsb", split="validation")
+stsb = load_dataset("nyu-mll/glue", "stsb", split="validation")
 print(f"[Data] STS-B loaded: {len(stsb)} pairs")
 
 # Extract sentences and scores
@@ -60,7 +60,7 @@ print("STEP 2: Loading SNLI train split (first 50K)")
 print("=" * 70)
 
 print("[Data] Downloading SNLI train split...")
-snli_train = load_dataset("snli", split="train[:50000]")
+snli_train = load_dataset("stanfordnlp/snli", split="train[:50000]")
 print(f"[Data] SNLI loaded: {len(snli_train)} pairs")
 
 # Filter out examples with label -1 (no consensus)

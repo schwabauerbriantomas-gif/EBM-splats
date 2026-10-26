@@ -36,20 +36,20 @@ if device == "cuda":
     print(f"GPU: {torch.cuda.get_device_name(0)}", flush=True)
     torch.cuda.set_per_process_memory_fraction(0.85)
 
-RESULTS_FILE = "/root/EBM-splats/tests/t12_results.jsonl"
+RESULTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "t12_results.jsonl")
 BASELINE_TARGET = 0.8672  # MiniLM-L6-v2 known STS-B Spearman
 
 # ── Load data ONCE ──
 from datasets import load_dataset
 
 print("Loading STS-B...", flush=True)
-stsb = load_dataset("glue", "stsb", split="validation")
+stsb = load_dataset("nyu-mll/glue", "stsb", split="validation")
 sts_s1 = [str(x) for x in stsb["sentence1"]]
 sts_s2 = [str(x) for x in stsb["sentence2"]]
 sts_scores = np.array(stsb["label"], dtype=np.float32) / 5.0
 
 print("Loading SNLI full...", flush=True)
-snli_full = load_dataset("snli", split="train")
+snli_full = load_dataset("stanfordnlp/snli", split="train")
 snli_clean = snli_full.filter(lambda x: x["label"] != -1)
 print(f"SNLI clean: {len(snli_clean)} pairs", flush=True)
 

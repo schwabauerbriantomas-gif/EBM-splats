@@ -23,7 +23,7 @@ from dllm.utils import get_model, get_tokenizer
 
 DEVICE = "cuda"
 MODEL_ID = "GSAI-ML/LLaDA-8B-Instruct"
-RESULTS_DIR = "/root/EBM-splats/tests/autoresearch_results"
+RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "autoresearch_results")
 
 import os
 os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -120,7 +120,7 @@ def compute_token_scores(embed_matrix, target_texts, suppress_texts, tokenizer, 
 
         # For each vocab token, decode it and compute its MiniLM embedding
         # This is expensive (vocab_size encode calls), so we use a cache
-        cache_path = f"/root/EBM-splats/tests/vocab_minilm_cache_{tokenizer.name_or_path.replace('/', '_')}.pt"
+        cache_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"vocab_minilm_cache_{tokenizer.name_or_path.replace('/', '_')}.pt")
         import os
         if os.path.exists(cache_path):
             vocab_embs = torch.load(cache_path, map_location=DEVICE)

@@ -32,8 +32,8 @@ from sklearn.metrics import roc_auc_score
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Device: {device}", flush=True)
 
-sys.path.insert(0, "/root/EBM-splats")
-RESULTS_FILE = "/root/EBM-splats/tests/t13_ood_results.jsonl"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
+RESULTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "t13_ood_results.jsonl")
 
 # ── Load model ──
 from sentence_transformers import SentenceTransformer
@@ -46,7 +46,7 @@ print(f"Model: {MODEL_NAME}, dim: {emb_dim}", flush=True)
 from datasets import load_dataset
 
 print("Loading WikiText-103 (ID distribution)...", flush=True)
-wiki = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+wiki = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="train")
 wiki_texts = [t.strip() for t in wiki["text"] if len(t.strip()) > 50][:10000]
 print(f"  ID texts: {len(wiki_texts)}", flush=True)
 

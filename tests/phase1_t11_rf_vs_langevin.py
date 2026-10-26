@@ -15,6 +15,7 @@ We use real MiniLM embeddings as the "data distribution" and compare:
 """
 
 import time
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -24,11 +25,11 @@ import json
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Device: {device}", flush=True)
 
-sys_path = "/root/EBM-splats"
+sys_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "ebm")
 import sys
 sys.path.insert(0, sys_path)
 
-RESULTS_FILE = "/root/EBM-splats/tests/t11_rf_results.jsonl"
+RESULTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "t11_rf_results.jsonl")
 
 from geometry import normalize_sphere, exp_map, project_to_tangent
 
@@ -40,7 +41,7 @@ print("Loading model + data...", flush=True)
 st_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device=device)
 emb_dim = st_model.get_sentence_embedding_dimension()
 
-wiki = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+wiki = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1", split="train")
 texts = [t.strip() for t in wiki["text"] if len(t.strip()) > 50][:5000]
 
 print(f"Encoding {len(texts)} texts...", flush=True)
